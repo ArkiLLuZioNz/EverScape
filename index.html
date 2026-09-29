@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EverScape</title>
@@ -1245,13 +1246,10 @@ button:disabled{
             <form id="loginForm">
 
                 <input
-                    id="loginUsername"
-                    class="menuInput"
-                    type="text"
-                    placeholder="Username"
-                    maxlength="20"
-                    autocomplete="username"
-                    required
+                   id="loginEmail"
+                   type="email"
+                   placeholder="Email"
+                   autocomplete="email"
                 >
 
                 <input
@@ -1277,8 +1275,7 @@ button:disabled{
             <div id="loginMessage" class="menuMessage"></div>
 
             <div class="menuInfo">
-                Your EverScape account is currently stored locally
-                in this browser.
+               Your EverScape account is securely stored online.
             </div>
 
         </div>
@@ -1299,6 +1296,13 @@ button:disabled{
                     maxlength="20"
                     autocomplete="username"
                     required
+                >
+				
+				<input
+                    id="createEmail"
+                    type="email"
+                    placeholder="Email"
+                    autocomplete="email"
                 >
 
                 <input
@@ -1820,40 +1824,24 @@ button:disabled{
 </div>
 
 <script>
+const SUPABASE_URL = "https://kqvmebnkyvzedsjyzdmm.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_AkvlaEpHWSxTOPrzre-vWQ_CditmgU_";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 
 /* ============================================================
    ACCOUNT SYSTEM
 ============================================================ */
 
-const ACCOUNTS_KEY="EverScape_Accounts";
-const CURRENT_USER_KEY="EverScape_CurrentUser";
-
-let currentUsername=null;
-
-function getAccounts(){
-
-    try{
-
-        return JSON.parse(
-            localStorage.getItem(ACCOUNTS_KEY)
-        ) || {};
-
-    }catch(error){
-
-        return {};
-
-    }
-
-}
-
-function saveAccounts(accounts){
-
-    localStorage.setItem(
-        ACCOUNTS_KEY,
-        JSON.stringify(accounts)
-    );
-
-}
+let currentUsername = null;
+let currentUserId = null;
+let currentUserEmail = null;
+let cloudSaveTimer = null;
+let isLoadingCloudSave = false;
 
 function menuMessage(elementId,message,type){
 
@@ -1886,8 +1874,8 @@ function showLogin(){
     document.getElementById("loginScreen")
         .classList.add("active");
 
+    document.getElementById("loginEmail").value="";
     document.getElementById("loginPassword").value="";
-
     document.getElementById("loginMessage").textContent="";
 
 }
@@ -1900,9 +1888,9 @@ function showCreateAccount(){
         .classList.add("active");
 
     document.getElementById("createUsername").value="";
+    document.getElementById("createEmail").value="";
     document.getElementById("createPassword").value="";
     document.getElementById("createPasswordConfirm").value="";
-
     document.getElementById("createMessage").textContent="";
 
 }
@@ -1941,12 +1929,16 @@ function showSettings(){
 }
 
 document.getElementById("createForm")
-.addEventListener("submit",function(event){
+.addEventListener("submit",async function(event){
 
     event.preventDefault();
 
     const username=
         document.getElementById("createUsername")
+        .value.trim();
+
+    const email=
+        document.getElementById("createEmail")
         .value.trim();
 
     const password=
@@ -1981,6 +1973,18 @@ document.getElementById("createForm")
 
     }
 
+    if(!email || !email.includes("@")){
+
+        menuMessage(
+            "createMessage",
+            "Please enter a valid email address.",
+            "error"
+        );
+
+        return;
+
+    }
+
     if(password.length<4){
 
         menuMessage(
@@ -2005,15 +2009,30 @@ document.getElementById("createForm")
 
     }
 
-    const accounts=getAccounts();
+    menuMessage(
+        "createMessage",
+        "Creating your account...",
+        "success"
+    );
 
-    const accountKey=username.toLowerCase();
+    const {data,error}=await supabaseClient.auth.signUp({
 
-    if(accounts[accountKey]){
+        email:email,
+        password:password,
+
+        options:{
+            data:{
+                username:username
+            }
+        }
+
+    });
+
+    if(error){
 
         menuMessage(
             "createMessage",
-            "That username already exists.",
+            error.message,
             "error"
         );
 
@@ -2021,57 +2040,58 @@ document.getElementById("createForm")
 
     }
 
-    accounts[accountKey]={
-        username:username,
-        password:password,
-        createdAt:new Date().toISOString()
-    };
-
-    saveAccounts(accounts);
-
     currentUsername=username;
+    currentUserEmail=email;
 
-    localStorage.setItem(
-        CURRENT_USER_KEY,
-        currentUsername
-    );
+    if(data.user){
 
-    menuMessage(
-        "createMessage",
-        "Account created successfully!",
-        "success"
-    );
+        currentUserId=data.user.id;
 
-    setTimeout(
-        showAccountMenu,
-        300
-    );
+    }
+
+    if(data.session){
+
+        menuMessage(
+            "createMessage",
+            "Account created successfully!",
+            "success"
+        );
+
+        setTimeout(
+            showAccountMenu,
+            500
+        );
+
+    }else{
+
+        menuMessage(
+            "createMessage",
+            "Account created! Check your email to confirm your account, then log in.",
+            "success"
+        );
+
+    }
 
 });
 
 document.getElementById("loginForm")
-.addEventListener("submit",function(event){
+.addEventListener("submit",async function(event){
 
     event.preventDefault();
 
-    const username=
-        document.getElementById("loginUsername")
+    const email=
+        document.getElementById("loginEmail")
         .value.trim();
 
     const password=
         document.getElementById("loginPassword")
         .value;
 
-    const accounts=getAccounts();
-
-    const account=
-        accounts[username.toLowerCase()];
-
-    if(!account){
+    if(!email || !password){
 
         menuMessage(
             "loginMessage",
-            "Username or password is incorrect.",
+            "Please enter your email and password.",
             "error"
         );
 
@@ -2079,26 +2099,57 @@ document.getElementById("loginForm")
 
     }
 
-    if(account.password!==password){
-
-        menuMessage(
-            "loginMessage",
-            "Username or password is incorrect.",
-            "error"
-        );
-
-        return;
-
-    }
-
-    currentUsername=account.username;
-
-    localStorage.setItem(
-        CURRENT_USER_KEY,
-        currentUsername
+    menuMessage(
+        "loginMessage",
+        "Logging in...",
+        "success"
     );
 
-    loadAutoSave();
+    const {data,error}=await supabaseClient.auth.signInWithPassword({
+
+        email:email,
+        password:password
+
+    });
+
+    if(error){
+
+        menuMessage(
+            "loginMessage",
+            "Email or password is incorrect.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if(!data.user){
+
+        menuMessage(
+            "loginMessage",
+            "Login failed.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    currentUserId=data.user.id;
+    currentUserEmail=data.user.email || email;
+
+    currentUsername=
+        data.user.user_metadata &&
+        data.user.user_metadata.username
+        ? data.user.user_metadata.username
+        : "Adventurer";
+
+    if(typeof loadCloudSave==="function"){
+
+        await loadCloudSave();
+
+    }
 
     menuMessage(
         "loginMessage",
@@ -2113,13 +2164,19 @@ document.getElementById("loginForm")
 
 });
 
-function enterGame(){
+async function enterGame(){
 
     document.getElementById("mainMenu")
         .style.display="none";
 
     document.getElementById("game")
         .style.display="block";
+
+    if(typeof loadCloudSave==="function"){
+
+        await loadCloudSave();
+
+    }
 
     updatePlayer();
     updatePlayerAppearance();
@@ -2132,21 +2189,23 @@ function enterGame(){
     );
 
     chat(
-        "Your character is automatically saved."
+        "Your character is saved to the cloud."
     );
 
 }
 
-function logout(){
+async function logout(){
 
     if(
-        typeof autoSaveCharacter==="function"
-        && currentUsername
+        typeof saveCharacterToCloud==="function"
+        && currentUserId
     ){
 
-        autoSaveCharacter();
+        await saveCharacterToCloud(true);
 
     }
+
+    await supabaseClient.auth.signOut();
 
     document.getElementById("game")
         .style.display="none";
@@ -2155,24 +2214,31 @@ function logout(){
         .style.display="flex";
 
     currentUsername=null;
-
-    localStorage.removeItem(
-        CURRENT_USER_KEY
-    );
+    currentUserId=null;
+    currentUserEmail=null;
 
     showLogin();
 
 }
 
-function checkLastUser(){
+async function checkLastUser(){
 
-    const savedUser=
-        localStorage.getItem(CURRENT_USER_KEY);
+    const {data}=await supabaseClient.auth.getSession();
 
-    if(savedUser){
+    if(
+        data &&
+        data.session &&
+        data.session.user
+    ){
 
-        document.getElementById("loginUsername")
-            .value=savedUser;
+        currentUserId=data.session.user.id;
+        currentUserEmail=data.session.user.email || "";
+
+        currentUsername=
+            data.session.user.user_metadata &&
+            data.session.user.user_metadata.username
+            ? data.session.user.user_metadata.username
+            : "Adventurer";
 
     }
 
@@ -4631,7 +4697,7 @@ function updateUI(){
 
     updatePlayerAppearance();
 
-    autoSaveCharacter();
+    queueCloudSave();
 
 }
 
@@ -4639,36 +4705,23 @@ function updateUI(){
    SAVE SYSTEM
 ============================================================ */
 
-function getAutoSaveKey(){
-
-    if(!currentUsername){
-
-        return null;
-
-    }
-
-    return (
-        "EverScape_AutoSave_"+
-        currentUsername.toLowerCase()
-    );
-
-}
-
 function getCharacterData(){
 
     return {
 
         game:"EverScape",
 
-        account:{
-            username:
-                currentUsername || ""
-        },
-
-        saveVersion:2,
+        saveVersion:3,
 
         savedAt:
             new Date().toISOString(),
+
+        account:{
+            username:
+                currentUsername || "",
+            email:
+                currentUserEmail || ""
+        },
 
         player:{
             x:playerX,
@@ -4717,7 +4770,6 @@ function getCharacterData(){
         equipment:{
             weapon:equippedWeapon,
             tool:equippedTool,
-            armor:(helmEquipped||bodyEquipped||legsEquipped),
             helm:helmEquipped,
             body:bodyEquipped,
             legs:legsEquipped,
@@ -4737,167 +4789,178 @@ function getCharacterData(){
 
 }
 
-function autoSaveCharacter(){
 
-    try{
+async function saveCharacterToCloud(force=false){
 
-        const key=
-            getAutoSaveKey();
-
-        if(!key)return;
-
-        localStorage.setItem(
-            key,
-            JSON.stringify(
-                getCharacterData()
-            )
-        );
-
-    }catch(error){
-
-        console.log(
-            "Auto-save unavailable."
-        );
-
-    }
-
-}
-
-function loadAutoSave(){
-
-    const key=
-        getAutoSaveKey();
-
-    if(!key)return;
-
-    try{
-
-        const raw=
-            localStorage.getItem(key);
-
-        if(!raw){
-
-            return;
-
-        }
-
-        const data=
-            JSON.parse(raw);
-
-        loadCharacterData(data);
-
-        chat(
-            "Your saved character has been loaded."
-        );
-
-    }catch(error){
-
-        console.log(
-            "Could not load auto-save."
-        );
-
-    }
-
-}
-
-function saveCharacter(){
-
-    const data=
-        getCharacterData();
-
-    const blob=
-        new Blob(
-            [
-                JSON.stringify(
-                    data,
-                    null,
-                    2
-                )
-            ],
-            {
-                type:"application/json"
-            }
-        );
-
-    const url=
-        URL.createObjectURL(blob);
-
-    const link=
-        document.createElement("a");
-
-    link.href=url;
-
-    link.download=
-        "EverScape_"+
-        (currentUsername||"Character")+
-        ".json";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
-
-    chat(
-        "Character save downloaded."
-    );
-
-}
-
-function loadCharacter(event){
-
-    const file=
-        event.target.files[0];
-
-    if(!file){
+    if(
+        !currentUserId ||
+        isLoadingCloudSave
+    ){
 
         return;
 
     }
 
-    const reader=
-        new FileReader();
+    if(
+        cloudSaveTimer &&
+        !force
+    ){
 
-    reader.onload=function(){
+        return;
 
-        try{
+    }
 
-            const data=
-                JSON.parse(
-                    reader.result
-                );
+    try{
 
-            loadCharacterData(data);
+        const saveData=getCharacterData();
 
-            chat(
-                "Character loaded successfully."
+        const {error}=await supabaseClient
+        .from("characters")
+        .upsert(
+            {
+                user_id:currentUserId,
+                username:currentUsername || "Adventurer",
+                save_data:saveData,
+                updated_at:new Date().toISOString()
+            },
+            {
+                onConflict:"user_id"
+            }
+        );
+
+        if(error){
+
+            console.error(
+                "Cloud save failed:",
+                error
             );
 
-            updateUI();
+            return;
 
-        }catch(error){
+        }
 
-            alert(
-                "Invalid EverScape character file."
+        console.log("Character saved to cloud.");
+
+    }catch(error){
+
+        console.error(
+            "Cloud save error:",
+            error
+        );
+
+    }
+
+}
+
+
+function queueCloudSave(){
+
+    if(
+        !currentUserId ||
+        isLoadingCloudSave
+    ){
+
+        return;
+
+    }
+
+    clearTimeout(cloudSaveTimer);
+
+    cloudSaveTimer=setTimeout(
+        function(){
+
+            cloudSaveTimer=null;
+
+            saveCharacterToCloud();
+
+        },
+        1200
+    );
+
+}
+
+
+async function loadCloudSave(){
+
+    if(!currentUserId){
+
+        return;
+
+    }
+
+    isLoadingCloudSave=true;
+
+    try{
+
+        const {data,error}=await supabaseClient
+        .from("characters")
+        .select("username,save_data")
+        .eq("user_id",currentUserId)
+        .maybeSingle();
+
+        if(error){
+
+            console.error(
+                "Cloud load failed:",
+                error
+            );
+
+            return;
+
+        }
+
+        if(
+            data &&
+            data.save_data
+        ){
+
+            currentUsername=
+                data.username ||
+                currentUsername ||
+                "Adventurer";
+
+            loadCharacterData(
+                data.save_data
+            );
+
+            chat(
+                "Your cloud character has been loaded."
+            );
+
+        }else{
+
+            await saveCharacterToCloud(true);
+
+            chat(
+                "A new cloud character has been created."
             );
 
         }
 
-    };
+    }catch(error){
 
-    reader.readAsText(file);
+        console.error(
+            "Cloud load error:",
+            error
+        );
 
-    event.target.value="";
+    }finally{
+
+        isLoadingCloudSave=false;
+
+    }
 
 }
+
 
 function loadCharacterData(data){
 
     if(
-        data.game!=="EverScape" &&
-        data.game!=="Gielinor Legends"
+        !data ||
+        (
+            data.game!=="EverScape" &&
+            data.game!=="Gielinor Legends"
+        )
     ){
 
         throw new Error(
@@ -5028,30 +5091,14 @@ function loadCharacterData(data){
             data.equipment.tool ||
             "None";
 
-        if(
-            data.equipment.helm!==undefined ||
-            data.equipment.body!==undefined ||
-            data.equipment.legs!==undefined
-        ){
+        helmEquipped=
+            !!data.equipment.helm;
 
-            helmEquipped=!!data.equipment.helm;
-            bodyEquipped=!!data.equipment.body;
-            legsEquipped=!!data.equipment.legs;
+        bodyEquipped=
+            !!data.equipment.body;
 
-        }else if(data.equipment.armor){
-
-            /* old save: armor was one on/off flag */
-            helmEquipped=true;
-            bodyEquipped=true;
-            legsEquipped=true;
-
-        }else{
-
-            helmEquipped=false;
-            bodyEquipped=false;
-            legsEquipped=false;
-
-        }
+        legsEquipped=
+            !!data.equipment.legs;
 
         equippedMasterCape=
             data.equipment.masterCape ||
@@ -5064,15 +5111,31 @@ function loadCharacterData(data){
         bankCoins=
             Number(data.bank.coins)||0;
 
-        Object.keys(bankItems).forEach(function(k){delete bankItems[k];});
+        Object.keys(bankItems).forEach(
+            function(k){
+                delete bankItems[k];
+            }
+        );
 
-        if(data.bank.items && typeof data.bank.items==="object"){
+        if(
+            data.bank.items &&
+            typeof data.bank.items==="object"
+        ){
 
-            Object.keys(data.bank.items).forEach(function(k){
+            Object.keys(data.bank.items)
+            .forEach(function(k){
 
-                const n=Number(data.bank.items[k])||0;
+                const n=
+                    Number(data.bank.items[k])||0;
 
-                if(n>0 && bankDef(k))bankItems[k]=n;
+                if(
+                    n>0 &&
+                    bankDef(k)
+                ){
+
+                    bankItems[k]=n;
+
+                }
 
             });
 
@@ -5088,10 +5151,14 @@ function loadCharacterData(data){
     }
 
     updatePlayer();
-
     updatePlayerAppearance();
 
-    updateUI();
+}
+
+
+async function autoSaveCharacter(){
+
+    await saveCharacterToCloud();
 
 }
 
