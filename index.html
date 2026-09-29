@@ -1,0 +1,5225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EverScape</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    padding:0;
+    background:#111;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    overflow:hidden;
+}
+
+/* =========================
+   LOGIN / MAIN MENU
+========================= */
+
+#mainMenu{
+    position:fixed;
+    inset:0;
+    background:
+        radial-gradient(circle at center,#294629 0%,#151515 45%,#080808 100%);
+    z-index:10000;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+#menuBox{
+    width:460px;
+    max-width:100%;
+    background:rgba(18,18,18,.97);
+    border:4px solid #806329;
+    box-shadow:
+        0 0 20px rgba(0,0,0,.8),
+        0 0 35px rgba(255,211,78,.12);
+    border-radius:8px;
+    padding:35px;
+    text-align:center;
+}
+
+#menuTitle{
+    font-size:52px;
+    font-weight:bold;
+    color:#ffd34e;
+    letter-spacing:3px;
+    text-shadow:
+        0 0 8px #8b6b2f,
+        0 0 20px rgba(255,211,78,.35);
+    margin-bottom:5px;
+}
+
+#menuSubtitle{
+    color:#aaa;
+    font-size:15px;
+    margin-bottom:30px;
+}
+
+.menuScreen{
+    display:none;
+}
+
+.menuScreen.active{
+    display:block;
+}
+
+.menuInput{
+    width:100%;
+    padding:14px;
+    margin:7px 0;
+    background:#0d0d0d;
+    color:white;
+    border:2px solid #555;
+    border-radius:4px;
+    font-size:17px;
+    outline:none;
+}
+
+.menuInput:focus{
+    border-color:#ffd34e;
+    box-shadow:0 0 8px rgba(255,211,78,.25);
+}
+
+.menuButton{
+    width:100%;
+    padding:13px;
+    margin:6px 0;
+    background:#4b4b4b;
+    color:white;
+    border:2px solid #777;
+    border-radius:4px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.menuButton:hover{
+    background:#696969;
+    border-color:#ffd34e;
+}
+
+.menuButton.primary{
+    background:#806329;
+    border-color:#b99745;
+}
+
+.menuButton.primary:hover{
+    background:#a27d32;
+}
+
+.menuButton.danger{
+    background:#572828;
+    border-color:#854141;
+}
+
+.menuButton.danger:hover{
+    background:#743333;
+}
+
+.menuMessage{
+    min-height:24px;
+    margin-top:12px;
+    font-size:14px;
+}
+
+.menuInfo{
+    background:#181818;
+    border:1px solid #444;
+    padding:12px;
+    margin:15px 0;
+    color:#aaa;
+    font-size:13px;
+    line-height:1.5;
+}
+
+#loggedInUsername{
+    color:#ffd34e;
+}
+
+/* =========================
+   GAME
+========================= */
+
+#game{
+    width:1200px;
+    height:760px;
+    margin:10px auto;
+    position:relative;
+    background:#222;
+    border:4px solid #555;
+    display:none;
+}
+
+#world{
+    position:absolute;
+    left:0;
+    top:0;
+    width:850px;
+    height:560px;
+    overflow:hidden;
+    background:#55a63e;
+    border-right:3px solid #222;
+    border-bottom:3px solid #222;
+}
+
+#sidePanel{
+    position:absolute;
+    right:0;
+    top:0;
+    width:350px;
+    height:560px;
+    background:#292929;
+    padding:10px;
+    overflow-y:auto;
+}
+
+#chat{
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:850px;
+    height:145px;
+    background:#171717;
+    border-top:3px solid #555;
+    padding:10px;
+    overflow-y:auto;
+    font-size:14px;
+}
+
+/* =========================
+   WORLD
+========================= */
+
+.tree{
+    position:absolute;
+    width:38px;
+    height:55px;
+    background:#654321;
+    border:2px solid #321;
+    cursor:pointer;
+    z-index:10;
+}
+
+.tree::before{
+    content:"";
+    position:absolute;
+    width:65px;
+    height:65px;
+    left:-16px;
+    top:-35px;
+    background:#236b2a;
+    border:3px solid #17491c;
+    border-radius:50%;
+}
+
+.rock{
+    position:absolute;
+    width:48px;
+    height:38px;
+    background:#777;
+    border:3px solid #444;
+    border-radius:45%;
+    cursor:pointer;
+    z-index:10;
+}
+
+.rock.copper{
+    background:#b8733a;
+    border-color:#6e3d17;
+}
+
+.rock.tin{
+    background:#b9c3cc;
+    border-color:#66727d;
+}
+
+.water{
+    position:absolute;
+    border:3px solid #216394;
+    border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#63b8f0,#398fd1 55%,#2a78b5);
+    box-shadow:
+        0 0 0 6px #d9c98c,
+        0 0 0 9px #b9a565,
+        inset 0 0 22px rgba(0,40,90,.55);
+    z-index:2;
+}
+
+.path{
+    position:absolute;
+    background:#b79b62;
+    border:2px solid #967b48;
+    z-index:1;
+}
+
+.building{
+    position:absolute;
+    background:#9b6237;
+    border:4px solid #482a16;
+    z-index:8;
+}
+
+.roof{
+    position:absolute;
+    background:#5b2525;
+    border:3px solid #321313;
+    z-index:9;
+}
+
+#furnace,
+#anvil,
+#bank{
+    position:absolute;
+    cursor:pointer;
+    z-index:15;
+    border:3px solid #222;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    font-size:11px;
+    text-align:center;
+}
+
+#furnace{
+    width:58px;
+    height:48px;
+    left:665px;
+    top:325px;
+    background:#633;
+}
+
+#anvil{
+    width:55px;
+    height:35px;
+    left:665px;
+    top:385px;
+    background:#555;
+}
+
+#bank{
+    width:75px;
+    height:45px;
+    left:452px;
+    top:352px;
+    background:#b18a36;
+}
+
+.fishingSpot{
+    position:absolute;
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    background:#8ee8ff;
+    border:4px solid #17627b;
+    cursor:pointer;
+    z-index:12;
+}
+
+.npc{
+    position:absolute;
+    width:30px;
+    height:38px;
+    background:#8a5bc4;
+    border:3px solid #27143d;
+    border-radius:7px;
+    cursor:pointer;
+    z-index:20;
+}
+
+.goblin{
+    position:absolute;
+    width:30px;
+    height:38px;
+    background:#39a844;
+    border:3px solid #164c1b;
+    border-radius:8px;
+    cursor:pointer;
+    z-index:25;
+}
+
+.goblin::before{
+    content:"";
+    position:absolute;
+    width:17px;
+    height:17px;
+    left:3px;
+    top:-13px;
+    background:#7bdc72;
+    border:2px solid #164c1b;
+    border-radius:50%;
+}
+
+.label{
+    position:absolute;
+    color:white;
+    background:rgba(0,0,0,.65);
+    padding:3px 5px;
+    border-radius:4px;
+    font-size:11px;
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:100;
+}
+
+/* =========================
+   PLAYER
+========================= */
+
+#player{
+    position:absolute;
+    left:470px;
+    top:270px;
+    width:30px;
+    height:38px;
+    background:#315bd6;
+    border:3px solid #111;
+    border-radius:8px;
+    z-index:100;
+    pointer-events:none;
+}
+
+#playerHead{
+    position:absolute;
+    width:18px;
+    height:18px;
+    left:3px;
+    top:-18px;
+    background:#f0bd91;
+    border:2px solid #111;
+    border-radius:50%;
+    z-index:20;
+}
+
+#playerCape{
+    position:absolute;
+    display:none;
+    width:30px;
+    height:43px;
+    left:-7px;
+    top:-2px;
+    border:3px solid #111;
+    border-radius:4px 4px 12px 12px;
+    z-index:-2;
+    box-shadow:0 0 8px currentColor;
+}
+
+#playerCape::before{
+    content:var(--capeIcon,"");
+    position:absolute;
+    left:50%;
+    top:7px;
+    transform:translateX(-50%);
+    font-size:15px;
+    line-height:1;
+    text-shadow:0 0 3px #000;
+}
+
+#playerArmor{
+    position:absolute;
+    left:0;
+    top:0;
+    width:0;
+    height:0;
+}
+
+.armorPiece{
+    display:none;
+    position:absolute;
+}
+
+/* Bronze plate colours: #d1934f light, #b06a2c main, #8f521f shade, #5a3210 outline */
+
+#armorBody{
+    left:-3px;
+    top:-3px;
+    width:30px;
+    height:24px;
+    background:linear-gradient(180deg,#d1934f 0%,#b06a2c 55%,#8f521f 100%);
+    border:2px solid #5a3210;
+    border-radius:7px 7px 3px 3px;
+    z-index:5;
+}
+
+#armorBody::before{
+    content:"";
+    position:absolute;
+    left:11px;
+    top:2px;
+    width:4px;
+    height:17px;
+    background:linear-gradient(90deg,#8f521f,#e3a866,#8f521f);
+    border-radius:2px;
+}
+
+#armorBody::after{
+    content:"";
+    position:absolute;
+    left:3px;
+    top:14px;
+    width:20px;
+    height:3px;
+    background:
+        radial-gradient(circle,#f0c48a 0 1px,transparent 1.5px) 0 0/7px 3px repeat-x;
+}
+
+.pauldron{
+    position:absolute;
+    top:-5px;
+    width:11px;
+    height:11px;
+    background:linear-gradient(180deg,#d9a062,#a35f26);
+    border:2px solid #5a3210;
+    border-radius:7px 7px 3px 3px;
+}
+
+.pauldron.l{ left:-8px; }
+.pauldron.r{ right:-8px; }
+
+#armorLegs{
+    left:-3px;
+    top:19px;
+    width:30px;
+    height:19px;
+    z-index:4;
+}
+
+#armorLegs::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:30px;
+    height:5px;
+    background:#6b3b14;
+    border:2px solid #3f210a;
+    border-radius:2px;
+    z-index:1;
+}
+
+.legPlate{
+    position:absolute;
+    top:3px;
+    width:14px;
+    height:16px;
+    background:linear-gradient(180deg,#c98a4a,#a5602a 60%,#8a4d1c);
+    border:2px solid #5a3210;
+    border-radius:2px 2px 5px 5px;
+}
+
+.legPlate::after{
+    content:"";
+    position:absolute;
+    left:3px;
+    top:7px;
+    width:4px;
+    height:3px;
+    background:#e3a866;
+    border-radius:50%;
+}
+
+.legPlate.l{ left:0; }
+.legPlate.r{ right:0; }
+
+#armorHelm{
+    left:0;
+    top:-23px;
+    width:24px;
+    height:16px;
+    background:linear-gradient(180deg,#dea267,#b06a2c 60%,#8f521f);
+    border:2px solid #5a3210;
+    border-radius:12px 12px 2px 2px;
+    z-index:30;
+}
+
+#armorHelm::before{
+    content:"";
+    position:absolute;
+    left:8px;
+    top:8px;
+    width:4px;
+    height:10px;
+    background:#a5602a;
+    border:1px solid #5a3210;
+    border-radius:0 0 2px 2px;
+}
+
+#armorHelm::after{
+    content:"";
+    position:absolute;
+    left:8px;
+    top:-6px;
+    width:4px;
+    height:6px;
+    background:#8f521f;
+    border:1px solid #5a3210;
+    border-radius:3px 3px 0 0;
+}
+
+/* Held items: sword = long silver blade + gold crossguard,
+   pickaxe = long wooden shaft + big curved bronze head */
+
+#heldItem{
+    position:absolute;
+    display:none;
+    width:8px;
+    height:34px;
+    right:-12px;
+    top:4px;
+    background:transparent;
+    border:none;
+    transform:rotate(-35deg);
+    transform-origin:bottom center;
+    z-index:110;
+}
+
+#heldItem.sword{
+    display:block;
+}
+
+#heldItem.sword::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:-4px;
+    width:8px;
+    height:28px;
+    background:linear-gradient(90deg,#f6fafd 0 45%,#98a8b8 50% 100%);
+    clip-path:polygon(50% 0,100% 12%,100% 100%,0 100%,0 12%);
+}
+
+#heldItem.sword::after{
+    content:"";
+    position:absolute;
+    left:-5px;
+    top:24px;
+    width:18px;
+    height:12px;
+    background:
+        linear-gradient(#d4a72c,#d4a72c) 0 0/18px 4px no-repeat,
+        linear-gradient(#5a3418,#5a3418) 6px 4px/6px 8px no-repeat;
+}
+
+#heldItem.axe{
+    display:block;
+    width:5px;
+    height:30px;
+    background:#75451f;
+    border:1px solid #33200f;
+}
+
+#heldItem.axe::after{
+    content:"";
+    position:absolute;
+    width:16px;
+    height:11px;
+    background:#bbb;
+    border:2px solid #444;
+    left:-7px;
+    top:-3px;
+    border-radius:7px 2px 7px 2px;
+}
+
+#heldItem.pickaxe{
+    display:block;
+    width:5px;
+    height:34px;
+    left:auto;
+    background:#75451f;
+    border:1px solid #33200f;
+}
+
+#heldItem.pickaxe::after{
+    content:"";
+    position:absolute;
+    left:-13px;
+    top:-4px;
+    width:29px;
+    height:13px;
+    border:4px solid #b06a2c;
+    border-bottom:none;
+    border-radius:15px 15px 0 0;
+}
+
+
+/* gold trim: unlocked once 2+ skills reach 99 */
+
+#playerCape.trimmed{
+    border-color:#ffd34e;
+    box-shadow:
+        inset 0 0 0 2px #b8860b,
+        0 0 9px #ffd34e,
+        0 0 3px currentColor;
+}
+
+#playerCape.trimmed::after{
+    content:"";
+    position:absolute;
+    left:2px;
+    right:2px;
+    bottom:2px;
+    height:4px;
+    background:linear-gradient(90deg,#b8860b,#ffe680,#b8860b);
+    border-radius:0 0 8px 8px;
+}
+
+.capePreview.trimmed{
+    border-color:#ffd34e;
+}
+
+.masterSlot.trimmed{
+    border-color:#ffd34e;
+    box-shadow:inset 0 0 7px #000,0 0 6px #ffd34e;
+}
+
+
+/* ---------- fishing spot ripple ---------- */
+.fishingSpot{
+    animation:spotPulse 1.8s ease-in-out infinite;
+}
+@keyframes spotPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.55);}
+    50%{box-shadow:0 0 0 7px rgba(255,255,255,0);}
+}
+
+/* ---------- HOUSE ---------- */
+.hBase{
+    position:absolute;
+    left:434px; top:294px; width:202px; height:167px;
+    background:#8d8d8d;
+    background-image:
+        repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 9px),
+        repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 1px,transparent 1px 16px);
+    border:3px solid #55555a;
+    border-radius:4px;
+    box-shadow:0 6px 10px rgba(0,0,0,.45);
+    z-index:6;
+}
+.hFloor{
+    position:absolute;
+    left:446px; top:304px; width:178px; height:145px;
+    background:repeating-linear-gradient(90deg,#b98450 0 22px,#9c6a3a 22px 24px);
+    box-shadow:inset 0 0 16px rgba(0,0,0,.5);
+    z-index:7;
+}
+.hBackWall{
+    position:absolute;
+    left:440px; top:298px; width:190px; height:52px;
+    background:repeating-linear-gradient(90deg,#7b4d28 0 11px,#65391b 11px 13px);
+    border-bottom:5px solid #3d2310;
+    box-shadow:inset 0 -8px 10px rgba(0,0,0,.35);
+    z-index:8;
+}
+.hWallV{
+    position:absolute;
+    top:298px; width:9px; height:161px;
+    background:repeating-linear-gradient(0deg,#7b4d28 0 11px,#65391b 11px 13px);
+    border:1px solid #3d2310;
+    z-index:8;
+}
+.hWallFront{
+    position:absolute;
+    top:449px; height:10px;
+    background:repeating-linear-gradient(90deg,#7b4d28 0 11px,#65391b 11px 13px);
+    border:1px solid #3d2310;
+    z-index:8;
+}
+.hWindow{
+    position:absolute;
+    top:312px; width:30px; height:24px;
+    background:
+        linear-gradient(#3a2210,#3a2210) 50% 0/3px 100% no-repeat,
+        linear-gradient(#3a2210,#3a2210) 0 50%/100% 3px no-repeat,
+        linear-gradient(135deg,#bfe6ff,#7dbde8);
+    border:3px solid #3a2210;
+    box-shadow:0 0 6px rgba(255,240,170,.5);
+    z-index:9;
+}
+.hDoor{
+    position:absolute;
+    left:513px; top:448px; width:6px; height:14px;
+    background:#5b3517;
+    border:1px solid #2c1908;
+    z-index:9;
+}
+.hMat{
+    position:absolute;
+    left:518px; top:440px; width:36px; height:14px;
+    background:repeating-linear-gradient(90deg,#8a2b2b 0 6px,#c2a04a 6px 8px);
+    border:2px solid #4a1616;
+    border-radius:3px;
+    z-index:8;
+}
+.hRug{
+    position:absolute;
+    left:503px; top:392px; width:66px; height:38px;
+    background:
+        repeating-linear-gradient(90deg,#c9a24a 0 4px,transparent 4px 12px),
+        #8a2b2b;
+    border:3px solid #c9a24a;
+    outline:2px solid #4a1616;
+    z-index:8;
+}
+.hBed{
+    position:absolute;
+    left:450px; top:410px; width:46px; height:34px;
+    background:linear-gradient(90deg,#f2ead6 0 13px,#3d5aa8 13px);
+    border:3px solid #4a2c12;
+    border-radius:4px;
+    z-index:8;
+}
+.hCounter{
+    position:absolute;
+    left:562px; top:414px; width:62px; height:16px;
+    background:linear-gradient(#a9743c,#7d5028);
+    border:2px solid #3d2310;
+    border-radius:3px;
+    box-shadow:0 3px 4px rgba(0,0,0,.4);
+    z-index:8;
+}
+.hRoofWrap{
+    position:absolute;
+    left:418px; top:252px; width:234px; height:56px;
+    filter:drop-shadow(0 6px 3px rgba(0,0,0,.5));
+    z-index:20;
+    pointer-events:none;
+}
+.hRoof{
+    width:100%; height:100%;
+    background:
+        linear-gradient(180deg,rgba(255,255,255,.18) 0 6px,transparent 6px),
+        repeating-linear-gradient(180deg,#9a4130 0 9px,#7a3123 9px 11px);
+    clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);
+}
+.hRoofTrim{
+    position:absolute;
+    left:418px; top:304px; width:234px; height:6px;
+    background:#3d2310;
+    z-index:21;
+    pointer-events:none;
+}
+.hChimney{
+    position:absolute;
+    left:596px; top:230px; width:22px; height:44px;
+    background:
+        repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 1px,transparent 1px 7px),
+        repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,transparent 1px 11px),
+        #8a5a48;
+    border:2px solid #4a2e22;
+    z-index:19;
+}
+.hSmoke{
+    position:absolute;
+    width:12px; height:12px;
+    background:rgba(210,210,210,.55);
+    border-radius:50%;
+    z-index:19;
+    pointer-events:none;
+}
+.bush{
+    position:absolute;
+    width:32px; height:26px;
+    background:radial-gradient(circle at 35% 35%,#3f9a45,#236b2a);
+    border:2px solid #17491c;
+    border-radius:50%;
+    z-index:9;
+}
+
+
+/* ---------- cooldown bar ---------- */
+#cooldownBar{
+    display:none;
+    position:absolute;
+    left:-8px; top:-34px;
+    width:46px; height:7px;
+    background:rgba(0,0,0,.75);
+    border:1px solid #000;
+    border-radius:4px;
+    overflow:hidden;
+    z-index:300;
+}
+#cooldownFill{
+    height:100%; width:0;
+    background:linear-gradient(90deg,#ffd34e,#ff9f32);
+}
+
+/* ---------- bank window ---------- */
+#bankModal{
+    display:none;
+    position:absolute;
+    left:60px; top:30px;
+    width:730px; height:490px;
+    background:rgba(20,16,10,.98);
+    border:3px solid #b18a36;
+    box-shadow:0 0 25px rgba(0,0,0,.8);
+    z-index:500;
+    padding:10px;
+    overflow:hidden;
+}
+#bankModal h3{
+    margin:0 0 6px 0;
+    color:#ffd34e;
+}
+.bankCols{
+    display:flex;
+    gap:10px;
+    height:395px;
+}
+.bankCol{
+    flex:1;
+    background:#161616;
+    border:2px solid #555;
+    padding:6px;
+    overflow-y:auto;
+}
+.bankCol h4{
+    margin:0 0 6px 0;
+    color:#ddd;
+}
+.bankRow{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:3px 2px;
+    border-bottom:1px solid #2a2a2a;
+    font-size:13px;
+}
+.bankRow .nm{ flex:1; }
+.bankRow button{ padding:2px 6px; font-size:11px; margin:0; }
+.bankCoinRow{
+    background:#241d0c;
+    border:1px solid #b18a36;
+    padding:5px;
+    margin-bottom:6px;
+    font-size:13px;
+}
+.bankCoinRow button{ margin:3px 3px 0 0; }
+.bankCoinRow input{
+    width:100px;
+    padding:4px;
+    background:#0d0d0d;
+    color:#fff;
+    border:2px solid #777;
+    margin-right:4px;
+}
+
+/* =========================
+   PLAYER FACING
+========================= */
+
+#playerHead{
+    background:linear-gradient(180deg,#5a3a1e 0 38%,#f0bd91 38% 100%);
+}
+
+/* eyes (front view) */
+#playerHead::before,
+#playerHead::after{
+    content:"";
+    position:absolute;
+    top:8px;
+    width:3px;
+    height:3px;
+    background:#111;
+    border-radius:50%;
+}
+
+#playerHead::before{ left:3px; }
+#playerHead::after{ left:8px; }
+
+/* BACK: all hair, no face, cape hangs over the back */
+#player.face-up #playerHead{
+    background:#5a3a1e;
+}
+
+#player.face-up #playerHead::before,
+#player.face-up #playerHead::after{
+    display:none;
+}
+
+#player.face-up #playerCape{
+    z-index:8;
+    left:-4px;
+    top:-1px;
+    width:32px;
+    height:42px;
+}
+
+#player.face-up #armorHelm::before{
+    display:none;
+}
+
+/* SIDE VIEWS: slimmer body, head shifted, one eye */
+#player.face-left,
+#player.face-right{
+    width:22px;
+}
+
+#player.face-left #playerHead::after,
+#player.face-right #playerHead::after{
+    display:none;
+}
+
+#player.face-right #playerHead{ left:5px; }
+#player.face-right #playerHead::before{ left:9px; }
+
+#player.face-left #playerHead{ left:-1px; }
+#player.face-left #playerHead::before{ left:2px; }
+
+#player.face-left #playerHead,
+#player.face-right #playerHead{
+    background:linear-gradient(180deg,#5a3a1e 0 38%,#f0bd91 38% 100%);
+}
+
+/* hair at the back of the head in side view */
+#player.face-right #playerHead{
+    background:
+        linear-gradient(90deg,#5a3a1e 0 30%,transparent 30%),
+        linear-gradient(180deg,#5a3a1e 0 38%,#f0bd91 38% 100%);
+}
+
+#player.face-left #playerHead{
+    background:
+        linear-gradient(270deg,#5a3a1e 0 30%,transparent 30%),
+        linear-gradient(180deg,#5a3a1e 0 38%,#f0bd91 38% 100%);
+}
+
+/* armour narrows with the body */
+#player.face-left #armorBody,
+#player.face-right #armorBody,
+#player.face-left #armorLegs,
+#player.face-right #armorLegs{
+    transform:scaleX(.72);
+}
+
+#player.face-left #armorBody::before,
+#player.face-right #armorBody::before{
+    display:none;
+}
+
+#player.face-left #armorHelm,
+#player.face-right #armorHelm{
+    transform:scaleX(.85);
+}
+
+#player.face-right #armorHelm{ left:2px; }
+#player.face-left #armorHelm{ left:-2px; }
+
+#player.face-left #armorHelm::before{ left:2px; }
+#player.face-right #armorHelm::before{ left:14px; }
+
+/* cape peeks out behind the body in side view */
+#player.face-right #playerCape{
+    left:-9px;
+    width:14px;
+}
+
+#player.face-left #playerCape{
+    left:15px;
+    width:14px;
+}
+
+#player.face-left #playerCape::before,
+#player.face-right #playerCape::before{
+    display:none;
+}
+
+/* held item follows the facing */
+#player.face-left #heldItem{
+    right:auto;
+    left:-12px;
+    transform:rotate(35deg);
+}
+
+#player.face-up #heldItem{
+    z-index:5;
+}
+
+/* =========================
+   PANELS
+========================= */
+
+.panelBox{
+    background:#1c1c1c;
+    border:2px solid #555;
+    padding:8px;
+    margin-bottom:8px;
+}
+
+.panelBox h3{
+    margin:0 0 7px;
+    color:#ffd34e;
+}
+
+.inventory{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:4px;
+}
+
+.slot{
+    min-height:52px;
+    background:#333;
+    border:2px solid #555;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    font-size:9px;
+    flex-direction:column;
+    padding:2px;
+}
+
+.slot button{
+    font-size:8px;
+    padding:2px 4px;
+    margin-top:2px;
+}
+
+.masterSlot{
+    background:linear-gradient(135deg,#171717,#333);
+    border:2px solid #9b7cff;
+    box-shadow:inset 0 0 7px #000;
+}
+
+.masterSlot strong{
+    font-size:9px;
+}
+
+button{
+    background:#555;
+    color:white;
+    border:2px solid #777;
+    padding:6px 9px;
+    margin:2px;
+    cursor:pointer;
+    border-radius:4px;
+}
+
+button:hover{
+    background:#777;
+}
+
+button:disabled{
+    background:#292929;
+    color:#777;
+    cursor:not-allowed;
+}
+
+/* =========================
+   MOVEMENT
+========================= */
+
+#movementControls{
+    position:absolute;
+    right:15px;
+    bottom:15px;
+    z-index:200;
+    width:130px;
+    text-align:center;
+}
+
+.moveButton{
+    width:38px;
+    height:38px;
+    margin:2px;
+    padding:0;
+    font-size:20px;
+    font-weight:bold;
+}
+
+/* =========================
+   DEATH
+========================= */
+
+#deathScreen{
+    display:none;
+    position:absolute;
+    left:0;
+    top:0;
+    width:850px;
+    height:560px;
+    background:rgba(0,0,0,.82);
+    z-index:500;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+
+#deathScreen h1{
+    color:#d33;
+    font-size:52px;
+    margin:10px;
+}
+
+/* =========================
+   INTERACTION
+========================= */
+
+#interaction{
+    display:none;
+    position:absolute;
+    left:420px;
+    top:120px;
+    background:rgba(0,0,0,.97);
+    border:2px solid #aaa;
+    padding:10px;
+    z-index:400;
+    width:300px;
+    max-height:400px;
+    overflow-y:auto;
+}
+
+#interaction h3{
+    color:#ffd34e;
+    margin-top:0;
+}
+
+.capeChoice{
+    width:100%;
+    text-align:left;
+    margin:3px 0;
+}
+
+.capePreview{
+    display:inline-block;
+    width:14px;
+    height:20px;
+    border:2px solid #111;
+    vertical-align:middle;
+    margin-right:5px;
+}
+
+.gold{color:#ffd700}
+.red{color:#ff3b3b}
+.blue{color:#42a5ff}
+.green{color:#42e05c}
+.purple{color:#b56cff}
+.cyan{color:#45ffff}
+.orange{color:#ff9d32}
+.white{color:#fff}
+.pink{color:#ff5bd7}
+
+/* =========================
+   LOGIN LOADING
+========================= */
+
+#loadingText{
+    color:#aaa;
+    margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     MAIN MENU
+========================= -->
+
+<div id="mainMenu">
+
+    <div id="menuBox">
+
+        <div id="menuTitle">EVERSCAPE</div>
+        <div id="menuSubtitle">A browser RPG adventure</div>
+
+        <!-- LOGIN -->
+
+        <div id="loginScreen" class="menuScreen active">
+
+            <h2>⚔ Login</h2>
+
+            <form id="loginForm">
+
+                <input
+                    id="loginUsername"
+                    class="menuInput"
+                    type="text"
+                    placeholder="Username"
+                    maxlength="20"
+                    autocomplete="username"
+                    required
+                >
+
+                <input
+                    id="loginPassword"
+                    class="menuInput"
+                    type="password"
+                    placeholder="Password"
+                    maxlength="50"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" class="menuButton primary">
+                    ⚔ LOGIN
+                </button>
+
+            </form>
+
+            <button class="menuButton" onclick="showCreateAccount()">
+                📝 CREATE ACCOUNT
+            </button>
+
+            <div id="loginMessage" class="menuMessage"></div>
+
+            <div class="menuInfo">
+                Your EverScape account is currently stored locally
+                in this browser.
+            </div>
+
+        </div>
+
+        <!-- CREATE ACCOUNT -->
+
+        <div id="createScreen" class="menuScreen">
+
+            <h2>📝 Create Account</h2>
+
+            <form id="createForm">
+
+                <input
+                    id="createUsername"
+                    class="menuInput"
+                    type="text"
+                    placeholder="Choose a username"
+                    maxlength="20"
+                    autocomplete="username"
+                    required
+                >
+
+                <input
+                    id="createPassword"
+                    class="menuInput"
+                    type="password"
+                    placeholder="Choose a password"
+                    maxlength="50"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <input
+                    id="createPasswordConfirm"
+                    class="menuInput"
+                    type="password"
+                    placeholder="Confirm password"
+                    maxlength="50"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <button type="submit" class="menuButton primary">
+                    📝 CREATE ACCOUNT
+                </button>
+
+            </form>
+
+            <button class="menuButton" onclick="showLogin()">
+                ← BACK TO LOGIN
+            </button>
+
+            <div id="createMessage" class="menuMessage"></div>
+
+        </div>
+
+        <!-- ACCOUNT -->
+
+        <div id="accountScreen" class="menuScreen">
+
+            <h2>
+                Welcome,
+                <span id="loggedInUsername"></span>
+            </h2>
+
+            <div class="menuInfo">
+                Your character is linked to this local EverScape account.
+            </div>
+
+            <button class="menuButton primary" onclick="enterGame()">
+                ▶ PLAY EVERSCAPE
+            </button>
+
+            <button class="menuButton" onclick="showCharacterInfo()">
+                👤 CHARACTER
+            </button>
+
+            <button class="menuButton" onclick="showSettings()">
+                ⚙ SETTINGS
+            </button>
+
+            <button class="menuButton danger" onclick="logout()">
+                🚪 LOG OUT
+            </button>
+
+            <div id="accountMessage" class="menuMessage"></div>
+
+        </div>
+
+        <!-- CHARACTER -->
+
+        <div id="characterScreen" class="menuScreen">
+
+            <h2>👤 Character</h2>
+
+            <div class="menuInfo">
+
+                <b>Username</b><br>
+
+                <span id="characterUsername"></span>
+
+                <br><br>
+
+                <b>Save System</b><br>
+
+                Your character automatically saves in this browser
+                while you play.
+
+                <br><br>
+
+                You can also use the Character Save panel inside
+                the game to download a backup.
+
+            </div>
+
+            <button class="menuButton" onclick="showAccountMenu()">
+                ← BACK
+            </button>
+
+        </div>
+
+        <!-- SETTINGS -->
+
+        <div id="settingsScreen" class="menuScreen">
+
+            <h2>⚙ Settings</h2>
+
+            <div class="menuInfo">
+
+                <b>EverScape Settings</b>
+
+                <br><br>
+
+                🎮 Movement: WASD / Arrow Keys
+
+                <br><br>
+
+                🖱 Click the world to move
+
+                <br><br>
+
+                💾 Character Auto-Save: ON
+
+                <br><br>
+
+                🌐 Account Type: Local Browser Account
+
+            </div>
+
+            <button class="menuButton" onclick="showAccountMenu()">
+                ← BACK
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     GAME
+========================= -->
+
+<div id="game">
+
+    <div id="world">
+
+        <!-- PATHS -->
+
+        <div class="path"
+             style="left:0;top:180px;width:850px;height:70px;">
+        </div>
+
+        <div class="path"
+             style="left:330px;top:0;width:70px;height:560px;">
+        </div>
+
+        <!-- WATER -->
+
+        <div class="water"
+             style="left:14px;top:12px;width:220px;height:150px;">
+        </div>
+
+        <!-- TREES -->
+
+        <div class="tree" style="left:80px;top:310px;" onclick="cutTree(this)"></div>
+        <div class="tree" style="left:155px;top:365px;" onclick="cutTree(this)"></div>
+        <div class="tree" style="left:245px;top:300px;" onclick="cutTree(this)"></div>
+        <div class="tree" style="left:70px;top:450px;" onclick="cutTree(this)"></div>
+        <div class="tree" style="left:285px;top:440px;" onclick="cutTree(this)"></div>
+        <div class="tree" style="left:745px;top:70px;" onclick="cutTree(this)"></div>
+
+        <!-- COPPER ROCKS (north-west) -->
+
+        <div class="rock copper" style="left:105px;top:180px;" onclick="mineCopper(this)"></div>
+        <div class="rock copper" style="left:175px;top:195px;" onclick="mineCopper(this)"></div>
+        <div class="rock copper" style="left:250px;top:185px;" onclick="mineCopper(this)"></div>
+
+        <div class="label" style="left:140px;top:236px;">Copper Rocks</div>
+
+        <!-- TIN ROCKS (south-east) -->
+
+        <div class="rock tin" style="left:610px;top:490px;" onclick="mineTin(this)"></div>
+        <div class="rock tin" style="left:665px;top:508px;" onclick="mineTin(this)"></div>
+        <div class="rock tin" style="left:575px;top:512px;" onclick="mineTin(this)"></div>
+
+        <div class="label" style="left:590px;top:462px;">Tin Rocks</div>
+
+        <!-- HOUSE -->
+
+        <div class="path" style="left:513px;top:459px;width:44px;height:101px;"></div>
+
+        <div class="hBase"></div>
+        <div class="hFloor"></div>
+        <div class="hBackWall"></div>
+        <div class="hWindow" style="left:462px;"></div>
+        <div class="hWindow" style="left:586px;"></div>
+        <div class="hWallV" style="left:437px;"></div>
+        <div class="hWallV" style="left:624px;"></div>
+        <div class="hWallFront" style="left:437px;width:76px;"></div>
+        <div class="hWallFront" style="left:557px;width:76px;"></div>
+        <div class="hDoor"></div>
+        <div class="hMat"></div>
+        <div class="hRug"></div>
+        <div class="hBed"></div>
+        <div class="hCounter"></div>
+
+        <div class="hChimney"></div>
+        <div class="hSmoke" style="left:600px;top:214px;"></div>
+        <div class="hSmoke" style="left:606px;top:200px;width:9px;height:9px;"></div>
+
+        <div class="hRoofWrap"><div class="hRoof"></div></div>
+        <div class="hRoofTrim"></div>
+
+        <div class="bush" style="left:402px;top:432px;"></div>
+        <div class="bush" style="left:640px;top:432px;"></div>
+
+        <div class="label"
+             style="left:487px;top:268px;">
+            Adventurer's House
+        </div>
+
+        <!-- FURNACE -->
+
+        <div id="furnace" onclick="openFurnace()">
+            🔥<br>FURNACE
+        </div>
+
+        <!-- ANVIL -->
+
+        <div id="anvil" onclick="openAnvil()">
+            ⚒ ANVIL
+        </div>
+
+        <!-- BANK -->
+
+        <div id="bank" onclick="openBank()">
+            🏦 BANK
+        </div>
+
+        <!-- FISHING -->
+
+        <div class="fishingSpot"
+             style="left:55px;top:60px;"
+             onclick="fishAtSpot(this)">
+        </div>
+
+        <div class="fishingSpot"
+             style="left:150px;top:85px;"
+             onclick="fishAtSpot(this)">
+        </div>
+
+        <!-- SHOPKEEPER -->
+
+        <div class="npc" id="shopkeeper"
+             style="left:585px;top:375px;"
+             onclick="openShop()">
+        </div>
+
+        <div class="label"
+             style="left:552px;top:350px;">
+            General Store
+        </div>
+
+        <!-- GOBLINS -->
+
+        <div id="goblin1"
+             class="goblin"
+             style="left:600px;top:120px;"
+             onclick="attackGoblin(1)">
+        </div>
+
+        <div class="label"
+             style="left:590px;top:95px;">
+            Goblin
+        </div>
+
+        <div id="goblin2"
+             class="goblin"
+             style="left:700px;top:150px;"
+             onclick="attackGoblin(2)">
+        </div>
+
+        <div class="label"
+             style="left:690px;top:125px;">
+            Goblin
+        </div>
+
+        <!-- PLAYER -->
+
+        <div id="player">
+
+            <div id="playerCape"></div>
+
+            <div id="playerArmor">
+
+                <div id="armorLegs" class="armorPiece">
+                    <i class="legPlate l"></i>
+                    <i class="legPlate r"></i>
+                </div>
+
+                <div id="armorBody" class="armorPiece">
+                    <i class="pauldron l"></i>
+                    <i class="pauldron r"></i>
+                </div>
+
+                <div id="armorHelm" class="armorPiece"></div>
+
+            </div>
+
+            <div id="cooldownBar"><div id="cooldownFill"></div></div>
+
+            <div id="playerHead"></div>
+
+            <div id="heldItem"></div>
+
+        </div>
+
+        <!-- MOVEMENT -->
+
+        <div id="movementControls">
+
+            <button class="moveButton"
+                    onclick="movePlayer(0,-10)">
+                ▲
+            </button>
+
+            <br>
+
+            <button class="moveButton"
+                    onclick="movePlayer(-10,0)">
+                ◀
+            </button>
+
+            <button class="moveButton"
+                    onclick="movePlayer(0,10)">
+                ▼
+            </button>
+
+            <button class="moveButton"
+                    onclick="movePlayer(10,0)">
+                ▶
+            </button>
+
+        </div>
+
+        <!-- DEATH -->
+
+        <div id="deathScreen">
+
+            <h1>YOU DIED</h1>
+
+            <div>
+                Your character has been defeated.
+            </div>
+
+            <button onclick="respawnPlayer()">
+                RESPAWN
+            </button>
+
+        </div>
+
+        <!-- INTERACTION -->
+
+        <div id="interaction"></div>
+
+        <div id="bankModal"></div>
+
+    </div>
+
+    <!-- =========================
+         SIDE PANEL
+    ========================== -->
+
+    <div id="sidePanel">
+
+        <div class="panelBox">
+
+            <h3>Character</h3>
+
+            <div>
+                Player:
+                <strong id="characterNameDisplay">Adventurer</strong>
+            </div>
+
+            <div>
+                Health:
+                <span id="healthDisplay">10 / 10</span>
+            </div>
+
+            <div>
+                Coins:
+                <span id="coinsDisplay">50</span>
+            </div>
+
+            <button onclick="eatFood()">
+                Eat Food
+            </button>
+
+            <button onclick="equipSword()">
+                Equip Sword
+            </button>
+
+            <button onclick="equipArmor()">
+                Equip Bronze Armor
+            </button>
+
+            <button onclick="unequipArmor()">
+                Unequip Armor
+            </button>
+
+            <button onclick="unequipHeld()">
+                Unequip Weapon/Tool
+            </button>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>Skills</h3>
+
+            <div>⚔ Attack: <span id="attackLevel">1</span></div>
+            <div>💪 Strength: <span id="strengthLevel">1</span></div>
+            <div>🛡 Defence: <span id="defenceLevel">1</span></div>
+            <div>❤️ Hitpoints: <span id="hitpointsLevel">10</span></div>
+            <div>🪓 Woodcutting: <span id="woodcuttingLevel">1</span></div>
+            <div>⛏ Mining: <span id="miningLevel">1</span></div>
+            <div>🔨 Smithing: <span id="smithingLevel">1</span></div>
+            <div>🎣 Fishing: <span id="fishingLevel">1</span></div>
+            <div>🍳 Cooking: <span id="cookingLevel">1</span></div>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>Inventory</h3>
+
+            <div class="inventory" id="inventory"></div>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>99 Master Capes</h3>
+
+            <div class="inventory" id="masterCapeInventory"></div>
+
+            <button onclick="openMasterCapeMenu()">
+                Choose Cape
+            </button>
+
+            <button onclick="unequipMasterCape()">
+                Remove Cape
+            </button>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>Bank</h3>
+
+            <div>
+                Bank Coins:
+                <span id="bankCoinsDisplay">0</span>
+            </div>
+
+            <div style="font-size:12px;color:#aaa;margin-top:4px;">
+                Visit the bank inside the Adventurer's House to deposit or withdraw.
+            </div>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>Character Save</h3>
+
+            <button onclick="saveCharacter()">
+                💾 SAVE CHARACTER
+            </button>
+
+            <button onclick="document.getElementById('loadFile').click()">
+                📂 LOAD CHARACTER
+            </button>
+
+            <input
+                id="loadFile"
+                type="file"
+                accept=".json"
+                style="display:none"
+                onchange="loadCharacter(event)"
+            >
+
+            <button onclick="newCharacter()">
+                🆕 NEW CHARACTER
+            </button>
+
+        </div>
+
+        <div class="panelBox">
+
+            <h3>Quest</h3>
+
+            <div>
+                <strong>The Beginning</strong>
+            </div>
+
+            <div>
+                Explore EverScape and become a master adventurer.
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CHAT -->
+
+    <div id="chat"></div>
+
+</div>
+
+<script>
+
+/* ============================================================
+   ACCOUNT SYSTEM
+============================================================ */
+
+const ACCOUNTS_KEY="EverScape_Accounts";
+const CURRENT_USER_KEY="EverScape_CurrentUser";
+
+let currentUsername=null;
+
+function getAccounts(){
+
+    try{
+
+        return JSON.parse(
+            localStorage.getItem(ACCOUNTS_KEY)
+        ) || {};
+
+    }catch(error){
+
+        return {};
+
+    }
+
+}
+
+function saveAccounts(accounts){
+
+    localStorage.setItem(
+        ACCOUNTS_KEY,
+        JSON.stringify(accounts)
+    );
+
+}
+
+function menuMessage(elementId,message,type){
+
+    const element=document.getElementById(elementId);
+
+    element.textContent=message;
+
+    element.style.color =
+        type==="success"
+        ? "#42e05c"
+        : "#ff6464";
+
+}
+
+function hideMenuScreens(){
+
+    document.querySelectorAll(".menuScreen")
+        .forEach(function(screen){
+
+            screen.classList.remove("active");
+
+        });
+
+}
+
+function showLogin(){
+
+    hideMenuScreens();
+
+    document.getElementById("loginScreen")
+        .classList.add("active");
+
+    document.getElementById("loginPassword").value="";
+
+    document.getElementById("loginMessage").textContent="";
+
+}
+
+function showCreateAccount(){
+
+    hideMenuScreens();
+
+    document.getElementById("createScreen")
+        .classList.add("active");
+
+    document.getElementById("createUsername").value="";
+    document.getElementById("createPassword").value="";
+    document.getElementById("createPasswordConfirm").value="";
+
+    document.getElementById("createMessage").textContent="";
+
+}
+
+function showAccountMenu(){
+
+    hideMenuScreens();
+
+    document.getElementById("accountScreen")
+        .classList.add("active");
+
+    document.getElementById("loggedInUsername")
+        .textContent=currentUsername || "Adventurer";
+
+}
+
+function showCharacterInfo(){
+
+    hideMenuScreens();
+
+    document.getElementById("characterScreen")
+        .classList.add("active");
+
+    document.getElementById("characterUsername")
+        .textContent=currentUsername || "Unknown";
+
+}
+
+function showSettings(){
+
+    hideMenuScreens();
+
+    document.getElementById("settingsScreen")
+        .classList.add("active");
+
+}
+
+document.getElementById("createForm")
+.addEventListener("submit",function(event){
+
+    event.preventDefault();
+
+    const username=
+        document.getElementById("createUsername")
+        .value.trim();
+
+    const password=
+        document.getElementById("createPassword")
+        .value;
+
+    const confirmPassword=
+        document.getElementById("createPasswordConfirm")
+        .value;
+
+    if(username.length<3){
+
+        menuMessage(
+            "createMessage",
+            "Username must be at least 3 characters.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if(!/^[a-zA-Z0-9_]+$/.test(username)){
+
+        menuMessage(
+            "createMessage",
+            "Username can only use letters, numbers and underscores.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if(password.length<4){
+
+        menuMessage(
+            "createMessage",
+            "Password must be at least 4 characters.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if(password!==confirmPassword){
+
+        menuMessage(
+            "createMessage",
+            "Passwords do not match.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const accounts=getAccounts();
+
+    const accountKey=username.toLowerCase();
+
+    if(accounts[accountKey]){
+
+        menuMessage(
+            "createMessage",
+            "That username already exists.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    accounts[accountKey]={
+        username:username,
+        password:password,
+        createdAt:new Date().toISOString()
+    };
+
+    saveAccounts(accounts);
+
+    currentUsername=username;
+
+    localStorage.setItem(
+        CURRENT_USER_KEY,
+        currentUsername
+    );
+
+    menuMessage(
+        "createMessage",
+        "Account created successfully!",
+        "success"
+    );
+
+    setTimeout(
+        showAccountMenu,
+        300
+    );
+
+});
+
+document.getElementById("loginForm")
+.addEventListener("submit",function(event){
+
+    event.preventDefault();
+
+    const username=
+        document.getElementById("loginUsername")
+        .value.trim();
+
+    const password=
+        document.getElementById("loginPassword")
+        .value;
+
+    const accounts=getAccounts();
+
+    const account=
+        accounts[username.toLowerCase()];
+
+    if(!account){
+
+        menuMessage(
+            "loginMessage",
+            "Username or password is incorrect.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if(account.password!==password){
+
+        menuMessage(
+            "loginMessage",
+            "Username or password is incorrect.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    currentUsername=account.username;
+
+    localStorage.setItem(
+        CURRENT_USER_KEY,
+        currentUsername
+    );
+
+    loadAutoSave();
+
+    menuMessage(
+        "loginMessage",
+        "Login successful!",
+        "success"
+    );
+
+    setTimeout(
+        showAccountMenu,
+        300
+    );
+
+});
+
+function enterGame(){
+
+    document.getElementById("mainMenu")
+        .style.display="none";
+
+    document.getElementById("game")
+        .style.display="block";
+
+    updatePlayer();
+    updatePlayerAppearance();
+    updateMasterCapeInventory();
+    updateUI();
+
+    chat(
+        "Welcome to EverScape, "
+        +currentUsername+"!"
+    );
+
+    chat(
+        "Your character is automatically saved."
+    );
+
+}
+
+function logout(){
+
+    if(
+        typeof autoSaveCharacter==="function"
+        && currentUsername
+    ){
+
+        autoSaveCharacter();
+
+    }
+
+    document.getElementById("game")
+        .style.display="none";
+
+    document.getElementById("mainMenu")
+        .style.display="flex";
+
+    currentUsername=null;
+
+    localStorage.removeItem(
+        CURRENT_USER_KEY
+    );
+
+    showLogin();
+
+}
+
+function checkLastUser(){
+
+    const savedUser=
+        localStorage.getItem(CURRENT_USER_KEY);
+
+    if(savedUser){
+
+        document.getElementById("loginUsername")
+            .value=savedUser;
+
+    }
+
+}
+
+/* ============================================================
+   GAME DATA
+============================================================ */
+
+let coins=50;
+let health=10;
+let maxHealth=10;
+
+let attackLevel=1;
+let strengthLevel=1;
+let defenceLevel=1;
+let hitpointsLevel=10;
+
+let woodcuttingLevel=1;
+let miningLevel=1;
+let smithingLevel=1;
+let fishingLevel=1;
+let cookingLevel=1;
+
+let logs=0;
+let bread=0;
+let swords=1;
+
+let ironPickaxes=0;
+let bronzePickaxes=0;
+let bronzeAxes=0;
+
+let capes=0;
+let fishingPoles=0;
+
+let copperOre=0;
+let tinOre=0;
+let bronzeBars=0;
+let forgedSwords=0;
+
+let fish=0;
+let cookedFish=0;
+let bones=0;
+
+let equippedWeapon="None";
+let equippedTool="None";
+
+let helmEquipped=false;
+let bodyEquipped=false;
+let legsEquipped=false;
+
+let bankCoins=0;
+let goblinKills=0;
+
+let equippedMasterCape=null;
+
+let bronzeHelms=0;
+let bronzePlatelegs=0;
+let bronzePlatebodies=0;
+
+let playerFacing="down";
+let playerX=540;
+let playerY=405;
+
+let goblinHealth={
+    1:20,
+    2:20
+};
+
+let goblinAlive={
+    1:true,
+    2:true
+};
+
+/* ============================================================
+   MASTER CAPES
+============================================================ */
+
+const masterCapes={
+
+    Attack:{
+        color:"#ff3030",
+        glow:"#ff0000",
+        icon:"⚔️",
+        description:
+        "A blazing warrior cape forged for masters of Attack."
+    },
+
+    Strength:{
+        color:"#ff7b19",
+        glow:"#ff5a00",
+        icon:"💪",
+        description:
+        "A brutal crimson-orange cape worn by mighty warriors."
+    },
+
+    Defence:{
+        color:"#4d7cff",
+        glow:"#174cff",
+        icon:"🛡️",
+        description:
+        "A steel-blue fortress cape representing perfect Defence."
+    },
+
+    Hitpoints:{
+        color:"#ff3b82",
+        glow:"#ff0066",
+        icon:"❤️",
+        description:
+        "A blood-red life cape pulsing with legendary energy."
+    },
+
+    Woodcutting:{
+        color:"#39c96b",
+        glow:"#00ff66",
+        icon:"🪓",
+        description:
+        "A forest-green cape carrying the power of ancient trees."
+    },
+
+    Mining:{
+        color:"#9b9b9b",
+        glow:"#ffffff",
+        icon:"⛏️",
+        description:
+        "A silver stoneworker cape covered in mineral energy."
+    },
+
+    Smithing:{
+        color:"#ff9f32",
+        glow:"#ff6600",
+        icon:"🔨",
+        description:
+        "A molten-orange cape glowing like a forge."
+    },
+
+    Fishing:{
+        color:"#28cfff",
+        glow:"#00eaff",
+        icon:"🎣",
+        description:
+        "A deep-sea blue cape shimmering like enchanted water."
+    },
+
+    Cooking:{
+        color:"#b95cff",
+        glow:"#8a00ff",
+        icon:"🍳",
+        description:
+        "A royal purple culinary cape glowing with magical heat."
+    }
+
+};
+
+/* ============================================================
+   UTILITY
+============================================================ */
+
+function chat(message){
+
+    const chatBox=
+        document.getElementById("chat");
+
+    const line=
+        document.createElement("div");
+
+    line.textContent=message;
+
+    chatBox.appendChild(line);
+
+    chatBox.scrollTop=
+        chatBox.scrollHeight;
+
+}
+
+function clamp(value,min,max){
+
+    return Math.max(
+        min,
+        Math.min(max,value)
+    );
+
+}
+
+/* ============================================================
+   PLAYER MOVEMENT
+============================================================ */
+
+function setFacing(dx,dy){
+
+    if(Math.abs(dx)>Math.abs(dy)){
+
+        playerFacing=dx<0?"left":"right";
+
+    }else if(dy!==0){
+
+        playerFacing=dy<0?"up":"down";
+
+    }
+
+}
+
+function movePlayer(dx,dy){
+
+    setFacing(dx,dy);
+
+    playerX=clamp(
+        playerX+dx,
+        5,
+        815
+    );
+
+    playerY=clamp(
+        playerY+dy,
+        20,
+        515
+    );
+
+    updatePlayer();
+
+}
+
+function updatePlayer(){
+
+    const player=
+        document.getElementById("player");
+
+    if(!player)return;
+
+    player.style.left=
+        playerX+"px";
+
+    player.style.top=
+        playerY+"px";
+
+    player.classList.remove(
+        "face-up",
+        "face-down",
+        "face-left",
+        "face-right"
+    );
+
+    player.classList.add(
+        "face-"+playerFacing
+    );
+
+    checkStationDistance();
+
+}
+
+/*
+   IMPORTANT:
+   Inputs are ignored here.
+   This is what allows WASD to work normally
+   when typing username/password.
+*/
+
+document.addEventListener("keydown",function(e){
+
+    const activeElement=
+        document.activeElement;
+
+    if(
+        activeElement &&
+        (
+            activeElement.tagName==="INPUT" ||
+            activeElement.tagName==="TEXTAREA" ||
+            activeElement.tagName==="SELECT" ||
+            activeElement.isContentEditable
+        )
+    ){
+
+        return;
+
+    }
+
+    if(e.key==="w" ||
+       e.key==="W" ||
+       e.key==="ArrowUp"){
+
+        e.preventDefault();
+
+        movePlayer(0,-10);
+
+    }
+
+    if(e.key==="s" ||
+       e.key==="S" ||
+       e.key==="ArrowDown"){
+
+        e.preventDefault();
+
+        movePlayer(0,10);
+
+    }
+
+    if(e.key==="a" ||
+       e.key==="A" ||
+       e.key==="ArrowLeft"){
+
+        e.preventDefault();
+
+        movePlayer(-10,0);
+
+    }
+
+    if(e.key==="d" ||
+       e.key==="D" ||
+       e.key==="ArrowRight"){
+
+        e.preventDefault();
+
+        movePlayer(10,0);
+
+    }
+
+});
+
+/* Click movement */
+
+document.getElementById("world")
+.addEventListener("click",function(e){
+
+    if(
+        e.target.closest(".tree") ||
+        e.target.closest(".rock") ||
+        e.target.closest(".npc") ||
+        e.target.closest(".goblin") ||
+        e.target.closest(".fishingSpot") ||
+        e.target.closest("#furnace") ||
+        e.target.closest("#anvil") ||
+        e.target.closest("#bank") ||
+        e.target.closest("#bankModal") ||
+        e.target.closest("#interaction") ||
+        e.target.closest("input") ||
+        e.target.closest("button")
+    ){
+
+        return;
+
+    }
+
+    const rect=
+        this.getBoundingClientRect();
+
+    const newX=
+        clamp(
+            e.clientX-rect.left-15,
+            5,
+            815
+        );
+
+    const newY=
+        clamp(
+            e.clientY-rect.top-19,
+            20,
+            515
+        );
+
+    setFacing(newX-playerX,newY-playerY);
+
+    playerX=newX;
+    playerY=newY;
+
+    updatePlayer();
+
+});
+
+/* ============================================================
+   LEVELING
+============================================================ */
+
+
+/* ============================================================
+   DISTANCE, STATIONS, COOLDOWNS
+============================================================ */
+
+let currentStation=null;
+
+const cooldowns={};
+let cooldownToken=0;
+let lastBusyMsg=0;
+
+function playerCenter(){
+
+    return {x:playerX+15,y:playerY+19};
+
+}
+
+function elCenter(el){
+
+    return {
+        x:el.offsetLeft+el.offsetWidth/2,
+        y:el.offsetTop+el.offsetHeight/2
+    };
+
+}
+
+function isNear(el,range){
+
+    if(!el)return false;
+
+    const p=playerCenter();
+    const c=elCenter(el);
+
+    return Math.hypot(p.x-c.x,p.y-c.y)<=range;
+
+}
+
+function requireNear(el,range,what){
+
+    if(isNear(el,range))return true;
+
+    chat("You need to move closer to the "+what+".");
+
+    return false;
+
+}
+
+function setStation(el,range){
+
+    currentStation={el:el,range:range+45};
+
+}
+
+function checkStationDistance(){
+
+    if(!currentStation)return;
+
+    if(!isNear(currentStation.el,currentStation.range)){
+
+        closeInteraction();
+
+        chat("You walk away.");
+
+    }
+
+}
+
+function actionReady(skill){
+
+    const until=cooldowns[skill]||0;
+
+    if(Date.now()>=until)return true;
+
+    if(Date.now()-lastBusyMsg>900){
+
+        chat("You're still busy... ("+
+            ((until-Date.now())/1000).toFixed(1)+"s)");
+
+        lastBusyMsg=Date.now();
+
+    }
+
+    return false;
+
+}
+
+function beginCooldown(skill,ms){
+
+    cooldowns[skill]=Date.now()+ms;
+
+    const bar=document.getElementById("cooldownBar");
+    const fill=document.getElementById("cooldownFill");
+
+    if(!bar||!fill)return;
+
+    const token=++cooldownToken;
+
+    bar.style.display="block";
+    fill.style.transition="none";
+    fill.style.width="0%";
+
+    void fill.offsetWidth;
+
+    fill.style.transition="width "+ms+"ms linear";
+    fill.style.width="100%";
+
+    setTimeout(function(){
+
+        if(token===cooldownToken){
+
+            bar.style.display="none";
+
+        }
+
+    },ms);
+
+}
+
+function getSkillLevel(name){
+
+    /* Levels are declared with let, so window[...] can't find them. */
+
+    const map={
+        attack:attackLevel,
+        strength:strengthLevel,
+        defence:defenceLevel,
+        hitpoints:hitpointsLevel,
+        woodcutting:woodcuttingLevel,
+        mining:miningLevel,
+        smithing:smithingLevel,
+        fishing:fishingLevel,
+        cooking:cookingLevel
+    };
+
+    return map[String(name).toLowerCase()]||1;
+
+}
+
+function masterCapesTrimmed(){
+
+    /* gold trim once you own more than one 99 cape */
+
+    let count=0;
+
+    Object.keys(masterCapes).forEach(function(skill){
+
+        if(getSkillLevel(skill)>=99)count++;
+
+    });
+
+    return count>1;
+
+}
+
+function addXP(skill,amount){
+
+    /* Levels are declared with let, so they are not on window.
+       Use explicit getters/setters instead. */
+
+    const skills={
+        attack:[()=>attackLevel,v=>attackLevel=v],
+        strength:[()=>strengthLevel,v=>strengthLevel=v],
+        defence:[()=>defenceLevel,v=>defenceLevel=v],
+        hitpoints:[()=>hitpointsLevel,v=>hitpointsLevel=v],
+        woodcutting:[()=>woodcuttingLevel,v=>woodcuttingLevel=v],
+        mining:[()=>miningLevel,v=>miningLevel=v],
+        smithing:[()=>smithingLevel,v=>smithingLevel=v],
+        fishing:[()=>fishingLevel,v=>fishingLevel=v],
+        cooking:[()=>cookingLevel,v=>cookingLevel=v]
+    };
+
+    const entry=skills[skill];
+
+    if(!entry)return;
+
+    const before=entry[0]();
+
+    const after=Math.min(
+        99,
+        before+Math.max(
+            1,
+            Math.floor(amount/10)
+        )
+    );
+
+    entry[1](after);
+
+    if(after>=99 && before<99){
+
+        chat(
+            skill+
+            " has reached level 99!"
+        );
+
+    }
+
+}
+
+/* ============================================================
+   WOODCUTTING
+============================================================ */
+
+function cutTree(el){
+
+    if(!requireNear(el,75,"tree"))return;
+    if(!actionReady("woodcutting"))return;
+
+
+    logs++;
+
+    beginCooldown("woodcutting",1800);
+    addXP(
+        "woodcutting",
+        35
+    );
+
+    chat(
+        "You chop the tree and receive a log."
+    );
+
+    updateUI();
+
+}
+
+/* ============================================================
+   MINING
+============================================================ */
+
+function mineCopper(el){
+
+    if(!requireNear(el,70,"copper rock"))return;
+    if(!actionReady("mining"))return;
+
+
+    copperOre++;
+
+    beginCooldown("mining",2000);
+    addXP("mining",35);
+
+    chat("You mine some copper ore.");
+
+    updateUI();
+
+}
+
+function mineTin(el){
+
+    if(!requireNear(el,70,"tin rock"))return;
+    if(!actionReady("mining"))return;
+
+
+    tinOre++;
+
+    beginCooldown("mining",2000);
+    addXP("mining",35);
+
+    chat("You mine some tin ore.");
+
+    updateUI();
+
+}
+
+/* ============================================================
+   FISHING
+============================================================ */
+
+function fishAtSpot(el){
+
+    if(!requireNear(el,75,"fishing spot"))return;
+    if(!actionReady("fishing"))return;
+
+
+    if(fishingPoles<=0){
+
+        chat(
+            "You need a fishing pole."
+        );
+
+        return;
+
+    }
+
+    fish++;
+
+    beginCooldown("fishing",2200);
+    addXP(
+        "fishing",
+        35
+    );
+
+    chat(
+        "You catch a fish."
+    );
+
+    updateUI();
+
+}
+
+/* ============================================================
+   COOKING
+============================================================ */
+
+function cookFish(){
+
+    if(!actionReady("cooking"))return;
+
+
+    if(fish<=0){
+
+        chat(
+            "You don't have any raw fish."
+        );
+
+        return;
+
+    }
+
+    fish--;
+
+    cookedFish++;
+
+    beginCooldown("cooking",1500);
+    addXP(
+        "cooking",
+        35
+    );
+
+    chat(
+        "You cook a fish."
+    );
+
+    updateUI();
+
+}
+
+function eatFood(){
+
+    if(cookedFish>0){
+
+        cookedFish--;
+
+        health=
+            Math.min(
+                maxHealth,
+                health+5
+            );
+
+        chat(
+            "You eat cooked fish."
+        );
+
+        updateUI();
+
+        return;
+
+    }
+
+    if(bread>0){
+
+        bread--;
+
+        health=
+            Math.min(
+                maxHealth,
+                health+3
+            );
+
+        chat(
+            "You eat bread."
+        );
+
+        updateUI();
+
+        return;
+
+    }
+
+    chat(
+        "You don't have anything to eat."
+    );
+
+}
+
+/* ============================================================
+   SMITHING
+============================================================ */
+
+function smeltBronze(){
+
+    if(!actionReady("smithing"))return;
+
+
+    if(
+        copperOre<1 ||
+        tinOre<1
+    ){
+
+        chat(
+            "You need 1 copper ore and 1 tin ore."
+        );
+
+        return;
+
+    }
+
+    copperOre--;
+    tinOre--;
+
+    bronzeBars++;
+
+    beginCooldown("smithing",2000);
+    addXP(
+        "smithing",
+        40
+    );
+
+    chat(
+        "You smelt a bronze bar."
+    );
+
+    updateUI();
+
+}
+
+function forgeSword(){
+
+    if(!actionReady("smithing"))return;
+
+
+    if(bronzeBars<2){
+
+        chat(
+            "You need 2 bronze bars."
+        );
+
+        return;
+
+    }
+
+    bronzeBars-=2;
+
+    forgedSwords++;
+
+    beginCooldown("smithing",2500);
+    addXP(
+        "smithing",
+        60
+    );
+
+    chat(
+        "You forge a bronze sword."
+    );
+
+    updateUI();
+
+}
+
+function forgeBronzeHelm(){
+
+    if(!actionReady("smithing"))return;
+
+
+    if(bronzeBars<1){
+
+        chat(
+            "You need a bronze bar."
+        );
+
+        return;
+
+    }
+
+    bronzeBars--;
+
+    bronzeHelms++;
+
+    beginCooldown("smithing",2500);
+    addXP(
+        "smithing",
+        30
+    );
+
+    chat(
+        "You forge a bronze helm."
+    );
+
+    updateUI();
+
+}
+
+function forgePlatelegs(){
+
+    if(!actionReady("smithing"))return;
+
+
+    if(bronzeBars<2){
+
+        chat(
+            "You need 2 bronze bars."
+        );
+
+        return;
+
+    }
+
+    bronzeBars-=2;
+
+    bronzePlatelegs++;
+
+    beginCooldown("smithing",2500);
+    addXP(
+        "smithing",
+        40
+    );
+
+    chat(
+        "You forge bronze platelegs."
+    );
+
+    updateUI();
+
+}
+
+function forgePlatebody(){
+
+    if(!actionReady("smithing"))return;
+
+
+    if(bronzeBars<3){
+
+        chat(
+            "You need 3 bronze bars."
+        );
+
+        return;
+
+    }
+
+    bronzeBars-=3;
+
+    bronzePlatebodies++;
+
+    beginCooldown("smithing",2500);
+    addXP(
+        "smithing",
+        50
+    );
+
+    chat(
+        "You forge a bronze platebody."
+    );
+
+    updateUI();
+
+}
+
+/* ============================================================
+   FURNACE / ANVIL
+============================================================ */
+
+function openFurnace(){
+
+    if(!requireNear(document.getElementById("furnace"),85,"furnace"))return;
+
+    setStation(document.getElementById("furnace"),85);
+
+    document.getElementById("interaction").innerHTML=`
+
+        <h3>🔥 Furnace</h3>
+
+        <button onclick="smeltBronze()">
+            Smelt Bronze
+        </button>
+
+        <button onclick="cookFish()">
+            Cook Fish
+        </button>
+
+        <button onclick="closeInteraction()">
+            Close
+        </button>
+    `;
+
+    document.getElementById("interaction")
+        .style.display="block";
+
+}
+
+function openAnvil(){
+
+    if(!requireNear(document.getElementById("anvil"),85,"anvil"))return;
+
+    setStation(document.getElementById("anvil"),85);
+
+    document.getElementById("interaction").innerHTML=`
+
+        <h3>⚒ Anvil</h3>
+
+        <button onclick="forgeSword()">
+            Forge Bronze Sword
+        </button>
+
+        <button onclick="forgeBronzeHelm()">
+            Forge Bronze Helm
+        </button>
+
+        <button onclick="forgePlatelegs()">
+            Forge Bronze Platelegs
+        </button>
+
+        <button onclick="forgePlatebody()">
+            Forge Bronze Platebody
+        </button>
+
+        <button onclick="closeInteraction()">
+            Close
+        </button>
+    `;
+
+    document.getElementById("interaction")
+        .style.display="block";
+
+}
+
+function closeInteraction(){
+
+    document.getElementById("interaction")
+        .style.display="none";
+
+    const bm=document.getElementById("bankModal");
+
+    if(bm)bm.style.display="none";
+
+    currentStation=null;
+
+}
+
+/* ============================================================
+   BANK
+============================================================ */
+
+const bankItems={};
+let bankWithdrawOpen=false;
+
+const BANK_DEFS=[
+    ["logs","Logs","🪵",()=>logs,v=>logs=v],
+    ["copperOre","Copper Ore","🪨",()=>copperOre,v=>copperOre=v],
+    ["tinOre","Tin Ore","🪨",()=>tinOre,v=>tinOre=v],
+    ["bronzeBars","Bronze Bars","🟫",()=>bronzeBars,v=>bronzeBars=v],
+    ["fish","Raw Fish","🐟",()=>fish,v=>fish=v],
+    ["cookedFish","Cooked Fish","🍖",()=>cookedFish,v=>cookedFish=v],
+    ["bread","Bread","🍞",()=>bread,v=>bread=v],
+    ["bones","Bones","🦴",()=>bones,v=>bones=v],
+    ["swords","Sword","⚔️",()=>swords,v=>swords=v],
+    ["forgedSwords","Forged Sword","⚔️",()=>forgedSwords,v=>forgedSwords=v],
+    ["bronzeAxes","Bronze Axe","🪓",()=>bronzeAxes,v=>bronzeAxes=v],
+    ["bronzePickaxes","Bronze Pickaxe","⛏️",()=>bronzePickaxes,v=>bronzePickaxes=v],
+    ["fishingPoles","Fishing Pole","🎣",()=>fishingPoles,v=>fishingPoles=v],
+    ["bronzeHelms","Bronze Helm","🪖",()=>bronzeHelms,v=>bronzeHelms=v],
+    ["bronzePlatelegs","Bronze Platelegs","🛡️",()=>bronzePlatelegs,v=>bronzePlatelegs=v],
+    ["bronzePlatebodies","Bronze Platebody","🛡️",()=>bronzePlatebodies,v=>bronzePlatebodies=v]
+];
+
+function bankDef(key){
+
+    return BANK_DEFS.find(function(d){return d[0]===key;});
+
+}
+
+function revalidateEquipment(){
+
+    if(swords+forgedSwords<=0)equippedWeapon="None";
+    if(equippedTool==="axe" && bronzeAxes<=0)equippedTool="None";
+    if(equippedTool==="pickaxe" && bronzePickaxes+ironPickaxes<=0)equippedTool="None";
+
+    updatePlayerAppearance();
+
+}
+
+function openBank(){
+
+    const bankEl=document.getElementById("bank");
+
+    if(!requireNear(bankEl,90,"bank"))return;
+
+    closeInteraction();
+
+    setStation(bankEl,90);
+
+    bankWithdrawOpen=false;
+
+    renderBank();
+
+    document.getElementById("bankModal")
+        .style.display="block";
+
+}
+
+function renderBank(){
+
+    let inv="";
+    let bnk="";
+
+    BANK_DEFS.forEach(function(d){
+
+        const have=d[3]();
+        const banked=bankItems[d[0]]||0;
+
+        if(have>0){
+
+            inv+=`
+                <div class="bankRow">
+                    <span>${d[2]}</span>
+                    <span class="nm">${d[1]} x${have}</span>
+                    <button onclick="bankDeposit('${d[0]}',1)">1</button>
+                    <button onclick="bankDeposit('${d[0]}',10)">10</button>
+                    <button onclick="bankDeposit('${d[0]}','all')">All</button>
+                </div>`;
+
+        }
+
+        if(banked>0){
+
+            bnk+=`
+                <div class="bankRow">
+                    <span>${d[2]}</span>
+                    <span class="nm">${d[1]} x${banked}</span>
+                    <button onclick="bankWithdraw('${d[0]}',1)">1</button>
+                    <button onclick="bankWithdraw('${d[0]}',10)">10</button>
+                    <button onclick="bankWithdraw('${d[0]}','all')">All</button>
+                </div>`;
+
+        }
+
+    });
+
+    if(!inv)inv='<div style="color:#888;font-size:13px;">Nothing to deposit.</div>';
+    if(!bnk)bnk='<div style="color:#888;font-size:13px;">Your bank is empty.</div>';
+
+    const withdrawForm=bankWithdrawOpen?`
+        <div style="margin-top:4px;">
+            <input id="withdrawAmount" type="number" min="1"
+                   max="${bankCoins}" placeholder="Amount"
+                   onkeydown="if(event.key==='Enter')confirmWithdraw()">
+            <button onclick="confirmWithdraw()">Confirm</button>
+            <button onclick="bankWithdrawOpen=false;renderBank()">Cancel</button>
+        </div>`:"";
+
+    document.getElementById("bankModal").innerHTML=`
+        <h3>🏦 Bank of EverScape
+            <button style="float:right;margin:0;" onclick="closeInteraction()">✕ Close</button>
+        </h3>
+
+        <div class="bankCols">
+
+            <div class="bankCol">
+                <h4>Your Inventory</h4>
+                <div class="bankCoinRow">
+                    🪙 Coins: <strong>${coins}</strong><br>
+                    <button onclick="depositCoins()">Deposit All Coins</button>
+                </div>
+                ${inv}
+                <button style="margin-top:6px;" onclick="bankDepositEverything()">Deposit All Items</button>
+            </div>
+
+            <div class="bankCol">
+                <h4>Your Bank</h4>
+                <div class="bankCoinRow">
+                    🪙 Bank Coins: <strong>${bankCoins}</strong><br>
+                    <button onclick="withdrawCoins()">Withdraw</button>
+                    ${withdrawForm}
+                </div>
+                ${bnk}
+            </div>
+
+        </div>
+    `;
+
+    const inp=document.getElementById("withdrawAmount");
+
+    if(inp)inp.focus();
+
+}
+
+function depositCoins(){
+
+    if(coins<=0){
+
+        chat("You have no coins to deposit.");
+
+        return;
+
+    }
+
+    const amt=coins;
+
+    bankCoins+=coins;
+    coins=0;
+
+    chat("You deposit "+amt+" coins.");
+
+    updateUI();
+    renderBank();
+
+}
+
+function withdrawCoins(){
+
+    if(bankCoins<=0){
+
+        chat("You have no coins in the bank.");
+
+        return;
+
+    }
+
+    bankWithdrawOpen=true;
+
+    renderBank();
+
+}
+
+function confirmWithdraw(){
+
+    const inp=document.getElementById("withdrawAmount");
+
+    const amt=Math.floor(Number(inp?inp.value:0));
+
+    if(!amt || amt<=0){
+
+        chat("Enter how many coins to withdraw.");
+
+        return;
+
+    }
+
+    if(amt>bankCoins){
+
+        chat("You only have "+bankCoins+" coins in the bank.");
+
+        return;
+
+    }
+
+    bankCoins-=amt;
+    coins+=amt;
+
+    bankWithdrawOpen=false;
+
+    chat("You withdraw "+amt+" coins.");
+
+    updateUI();
+    renderBank();
+
+}
+
+function bankDeposit(key,amount){
+
+    const d=bankDef(key);
+
+    if(!d)return;
+
+    const have=d[3]();
+    const n=amount==="all"?have:Math.min(amount,have);
+
+    if(n<=0)return;
+
+    d[4](have-n);
+
+    bankItems[key]=(bankItems[key]||0)+n;
+
+    revalidateEquipment();
+
+    chat("You deposit "+n+" "+d[1]+".");
+
+    updateUI();
+    renderBank();
+
+}
+
+function bankWithdraw(key,amount){
+
+    const d=bankDef(key);
+
+    if(!d)return;
+
+    const banked=bankItems[key]||0;
+    const n=amount==="all"?banked:Math.min(amount,banked);
+
+    if(n<=0)return;
+
+    bankItems[key]=banked-n;
+
+    if(bankItems[key]<=0)delete bankItems[key];
+
+    d[4](d[3]()+n);
+
+    chat("You withdraw "+n+" "+d[1]+".");
+
+    updateUI();
+    renderBank();
+
+}
+
+function bankDepositEverything(){
+
+    let moved=0;
+
+    BANK_DEFS.forEach(function(d){
+
+        const have=d[3]();
+
+        if(have>0){
+
+            d[4](0);
+
+            bankItems[d[0]]=(bankItems[d[0]]||0)+have;
+
+            moved+=have;
+
+        }
+
+    });
+
+    if(moved===0){
+
+        chat("You have nothing to deposit.");
+
+        return;
+
+    }
+
+    revalidateEquipment();
+
+    chat("You deposit all your items.");
+
+    updateUI();
+    renderBank();
+
+}
+
+/* ============================================================
+   SHOP
+============================================================ */
+
+function openShop(){
+
+    if(!requireNear(document.getElementById("shopkeeper"),85,"General Store"))return;
+
+    setStation(document.getElementById("shopkeeper"),85);
+
+    document.getElementById("interaction").innerHTML=`
+
+        <h3>🛒 General Store</h3>
+
+        <button onclick="buyBread()">
+            Buy Bread - 5 coins
+        </button>
+
+        <button onclick="buyFishingPole()">
+            Buy Fishing Pole - 10 coins
+        </button>
+
+        <button onclick="buyBronzeAxe()">
+            Buy Bronze Axe - 15 coins
+        </button>
+
+        <button onclick="buyBronzePickaxe()">
+            Buy Bronze Pickaxe - 15 coins
+        </button>
+
+        <hr>
+
+        <button onclick="sellLogs()">
+            Sell Log - 2 coins
+        </button>
+
+        <button onclick="sellFish()">
+            Sell Fish - 3 coins
+        </button>
+
+        <button onclick="sellTinOre()">
+            Sell Tin Ore - 1 coin
+        </button>
+
+        <button onclick="sellCopperOre()">
+            Sell Copper Ore - 1 coin
+        </button>
+
+        <button onclick="sellBronzeHelm()">
+            Sell Bronze Helm - 10 coins
+        </button>
+
+        <button onclick="sellBronzePlatelegs()">
+            Sell Bronze Platelegs - 10 coins
+        </button>
+
+        <button onclick="sellBronzePlatebody()">
+            Sell Bronze Platebody - 10 coins
+        </button>
+
+        <button onclick="closeInteraction()">
+            Close
+        </button>
+    `;
+
+    document.getElementById("interaction")
+        .style.display="block";
+
+}
+
+function buyBread(){
+
+    if(coins<5){
+
+        chat("Not enough coins.");
+
+        return;
+
+    }
+
+    coins-=5;
+
+    bread++;
+
+    chat("You buy bread.");
+
+    updateUI();
+
+}
+
+function buyFishingPole(){
+
+    if(coins<10){
+
+        chat("Not enough coins.");
+
+        return;
+
+    }
+
+    coins-=10;
+
+    fishingPoles++;
+
+    chat("You buy a fishing pole.");
+
+    updateUI();
+
+}
+
+function buyBronzeAxe(){
+
+    if(coins<15){
+
+        chat("Not enough coins.");
+
+        return;
+
+    }
+
+    coins-=15;
+
+    bronzeAxes++;
+
+    chat("You buy a bronze axe.");
+
+    updateUI();
+
+}
+
+function buyBronzePickaxe(){
+
+    if(coins<15){
+
+        chat("Not enough coins.");
+
+        return;
+
+    }
+
+    coins-=15;
+
+    bronzePickaxes++;
+
+    chat("You buy a bronze pickaxe.");
+
+    updateUI();
+
+}
+
+function sellLogs(){
+
+    if(logs<=0){
+
+        chat("You have no logs to sell.");
+
+        return;
+
+    }
+
+    logs--;
+
+    coins+=2;
+
+    chat("You sell a log for 2 coins.");
+
+    updateUI();
+
+}
+
+function sellFish(){
+
+    if(fish<=0){
+
+        chat("You have no raw fish to sell.");
+
+        return;
+
+    }
+
+    fish--;
+
+    coins+=3;
+
+    chat("You sell a fish for 3 coins.");
+
+    updateUI();
+
+}
+
+function sellTinOre(){
+
+    if(tinOre<=0){ chat("You have no tin ore to sell."); return; }
+
+    tinOre--;
+    coins+=1;
+    chat("You sell a tin ore for 1 coin.");
+    updateUI();
+
+}
+
+function sellCopperOre(){
+
+    if(copperOre<=0){ chat("You have no copper ore to sell."); return; }
+
+    copperOre--;
+    coins+=1;
+    chat("You sell a copper ore for 1 coin.");
+    updateUI();
+
+}
+
+function sellBronzeHelm(){
+
+    if(bronzeHelms<=0){ chat("You have no bronze helm to sell."); return; }
+
+    bronzeHelms--;
+    coins+=10;
+    chat("You sell a bronze helm for 10 coins.");
+    updateUI();
+
+}
+
+function sellBronzePlatelegs(){
+
+    if(bronzePlatelegs<=0){ chat("You have no bronze platelegs to sell."); return; }
+
+    bronzePlatelegs--;
+    coins+=10;
+    chat("You sell bronze platelegs for 10 coins.");
+    updateUI();
+
+}
+
+function sellBronzePlatebody(){
+
+    if(bronzePlatebodies<=0){ chat("You have no bronze platebody to sell."); return; }
+
+    bronzePlatebodies--;
+    coins+=10;
+    chat("You sell a bronze platebody for 10 coins.");
+    updateUI();
+
+}
+
+/* ============================================================
+   EQUIPMENT
+============================================================ */
+
+function equipSword(){
+
+    if(
+        swords<=0 &&
+        forgedSwords<=0
+    ){
+
+        chat("You don't have a sword.");
+
+        return;
+
+    }
+
+    equippedWeapon="Bronze Sword";
+    equippedTool="None";
+
+    updatePlayerAppearance();
+
+    chat("You equip your sword.");
+
+    updateUI();
+
+}
+
+function equipTool(tool){
+
+    equippedTool=tool;
+    equippedWeapon="None";
+
+    updatePlayerAppearance();
+
+    chat("You equip your "+tool+".");
+
+    updateUI();
+
+}
+
+function unequipHeld(){
+
+    if(
+        equippedWeapon==="None" &&
+        equippedTool==="None"
+    ){
+
+        chat("You aren't holding anything.");
+
+        return;
+
+    }
+
+    equippedWeapon="None";
+    equippedTool="None";
+
+    updatePlayerAppearance();
+
+    chat("You put away what you were holding.");
+
+    updateUI();
+
+}
+
+function equipArmor(){
+
+    if(
+        bronzeHelms<=0 &&
+        bronzePlatebodies<=0 &&
+        bronzePlatelegs<=0
+    ){
+
+        chat("You don't have bronze armor.");
+
+        return;
+
+    }
+
+    if(bronzeHelms>0)helmEquipped=true;
+    if(bronzePlatebodies>0)bodyEquipped=true;
+    if(bronzePlatelegs>0)legsEquipped=true;
+
+    updatePlayerAppearance();
+
+    chat("You equip your bronze armor.");
+
+    updateUI();
+
+}
+
+function unequipArmor(){
+
+    if(
+        !helmEquipped &&
+        !bodyEquipped &&
+        !legsEquipped
+    ){
+
+        chat("You aren't wearing any armor.");
+
+        return;
+
+    }
+
+    helmEquipped=false;
+    bodyEquipped=false;
+    legsEquipped=false;
+
+    updatePlayerAppearance();
+
+    chat("You take off your armor.");
+
+    updateUI();
+
+}
+
+function toggleArmorPiece(piece){
+
+    if(piece==="helm"){
+
+        helmEquipped=!helmEquipped;
+
+    }else if(piece==="body"){
+
+        bodyEquipped=!bodyEquipped;
+
+    }else if(piece==="legs"){
+
+        legsEquipped=!legsEquipped;
+
+    }
+
+    updatePlayerAppearance();
+
+    updateUI();
+
+}
+
+function swordButton(){
+
+    return equippedWeapon!=="None"
+        ?`<button onclick="unequipHeld()">REMOVE</button>`
+        :`<button onclick="equipSword()">EQUIP</button>`;
+
+}
+
+function toolButton(tool){
+
+    return equippedTool===tool
+        ?`<button onclick="unequipHeld()">REMOVE</button>`
+        :`<button onclick="equipTool('${tool}')">EQUIP</button>`;
+
+}
+
+function armorButton(piece,worn){
+
+    return `<button onclick="toggleArmorPiece('${piece}')">${worn?"REMOVE":"EQUIP"}</button>`;
+
+}
+
+function setShown(id,on){
+
+    const e=document.getElementById(id);
+
+    if(e)e.style.display=on?"block":"none";
+
+}
+
+function updatePlayerAppearance(){
+
+    /* can't wear what you no longer own */
+
+    if(bronzeHelms<=0)helmEquipped=false;
+    if(bronzePlatebodies<=0)bodyEquipped=false;
+    if(bronzePlatelegs<=0)legsEquipped=false;
+
+    setShown("armorHelm",helmEquipped);
+    setShown("armorBody",bodyEquipped);
+    setShown("armorLegs",legsEquipped);
+
+    const item=
+        document.getElementById("heldItem");
+
+    if(item){
+
+        item.className="";
+
+        if(equippedWeapon!=="None"){
+
+            item.classList.add("sword");
+
+        }else if(equippedTool==="axe"){
+
+            item.classList.add("axe");
+
+        }else if(equippedTool==="pickaxe"){
+
+            item.classList.add("pickaxe");
+
+        }else{
+
+            item.style.display="none";
+
+        }
+
+        if(item.className)item.style.display="block";
+
+    }
+
+    const cape=
+        document.getElementById("playerCape");
+
+    if(!cape)return;
+
+    if(equippedMasterCape && masterCapes[equippedMasterCape]){
+
+        const capeData=
+            masterCapes[equippedMasterCape];
+
+        cape.style.display="block";
+        cape.classList.toggle("trimmed",masterCapesTrimmed());
+        cape.style.background=capeData.color;
+        cape.style.color=capeData.glow;
+        cape.style.setProperty(
+            "--capeIcon",
+            JSON.stringify(capeData.icon)
+        );
+
+    }else{
+
+        cape.style.display="none";
+
+    }
+
+}
+
+/* ============================================================
+   COMBAT
+============================================================ */
+
+function attackGoblin(id){
+
+    if(!requireNear(document.getElementById("goblin"+id),80,"goblin"))return;
+
+
+    if(!goblinAlive[id]){
+
+        chat(
+            "That goblin is already defeated."
+        );
+
+        return;
+
+    }
+
+    if(!actionReady("attack"))return;
+
+    const damage=
+        Math.floor(
+            Math.random()*5
+        )+1;
+
+    goblinHealth[id]-=damage;
+
+    chat(
+        "You hit the goblin for "
+        +damage+
+        " damage."
+    );
+
+    beginCooldown("attack",1200);
+
+    addXP(
+        "attack",
+        20
+    );
+
+    if(goblinHealth[id]<=0){
+
+        goblinAlive[id]=false;
+
+        goblinKills++;
+
+        coins+=5;
+
+        bones++;
+
+        const goblin=
+            document.getElementById(
+                "goblin"+id
+            );
+
+        goblin.style.display="none";
+
+        chat(
+            "Goblin defeated! You receive 5 coins and bones."
+        );
+
+        setTimeout(
+            function(){
+
+                goblinHealth[id]=20;
+
+                goblinAlive[id]=true;
+
+                goblin.style.display="block";
+
+                chat(
+                    "A goblin has respawned."
+                );
+
+            },
+            5000
+        );
+
+        updateUI();
+
+        return;
+
+    }
+
+    const retaliation=
+        Math.floor(
+            Math.random()*3
+        )+1;
+
+    health-=retaliation;
+
+    chat(
+        "The goblin hits you for "
+        +retaliation+
+        " damage."
+    );
+
+    if(health<=0){
+
+        die();
+
+    }
+
+    updateUI();
+
+}
+
+function die(){
+
+    health=0;
+
+    document.getElementById("deathScreen")
+        .style.display="flex";
+
+    chat(
+        "You have died."
+    );
+
+    updateUI();
+
+}
+
+function respawnPlayer(){
+
+    health=maxHealth;
+
+    playerX=540;
+
+    playerY=405;
+
+    updatePlayer();
+
+    document.getElementById("deathScreen")
+        .style.display="none";
+
+    chat(
+        "You respawn at the Adventurer's House."
+    );
+
+    updateUI();
+
+}
+
+/* ============================================================
+   MASTER CAPES
+============================================================ */
+
+function openMasterCapeMenu(){
+
+    closeInteraction();
+
+    let html=
+        "<h3>🏆 Master Capes</h3>";
+
+    Object.keys(masterCapes)
+        .forEach(function(skill){
+
+            const data=
+                masterCapes[skill];
+
+            const level=
+                getSkillLevel(skill);
+
+            const unlocked=
+                level>=99;
+
+            html+=`
+
+                <button
+                    class="capeChoice"
+                    ${unlocked?"":"disabled"}
+                    onclick="equipMasterCape('${skill}')"
+                >
+
+                    <span
+                        class="capePreview${masterCapesTrimmed()?" trimmed":""}"
+                        style="
+                            background:${data.color};
+                            box-shadow:0 0 6px ${data.glow};
+                        "
+                    ></span>
+
+                    ${data.icon}
+                    ${skill}
+                    ${unlocked?"":" - Level 99 required"}
+
+                </button>
+            `;
+
+        });
+
+    html+=`
+
+        <button onclick="unequipMasterCape()">
+            Remove Cape
+        </button>
+
+        <button onclick="closeInteraction()">
+            Close
+        </button>
+    `;
+
+    document.getElementById("interaction")
+        .innerHTML=html;
+
+    document.getElementById("interaction")
+        .style.display="block";
+
+}
+
+function equipMasterCape(skill){
+
+    if(
+        !masterCapes[skill]
+    ){
+
+        return;
+
+    }
+
+    if(
+        getSkillLevel(skill)<99
+    ){
+
+        chat(
+            "You need level 99 in "
+            +skill+
+            " to wear this cape."
+        );
+
+        return;
+
+    }
+
+    if(
+        !equippedMasterCape
+    ){
+
+        capes++;
+
+    }
+
+    equippedMasterCape=skill;
+
+    updatePlayerAppearance();
+
+    updateMasterCapeInventory();
+
+    chat(
+        "You equip the "
+        +skill+
+        " Master Cape."
+    );
+
+    closeInteraction();
+
+    updateUI();
+
+}
+
+function unequipMasterCape(){
+
+    if(!equippedMasterCape){
+
+        chat("You aren't wearing a cape.");
+
+        return;
+
+    }
+
+    equippedMasterCape=null;
+
+    updatePlayerAppearance();
+
+    updateMasterCapeInventory();
+
+    chat("You take off your cape.");
+
+    closeInteraction();
+
+    updateUI();
+
+}
+
+function updateMasterCapeInventory(){
+
+    const box=
+        document.getElementById(
+            "masterCapeInventory"
+        );
+
+    if(!box)return;
+
+    box.innerHTML="";
+
+    Object.keys(masterCapes)
+        .forEach(function(skill){
+
+            const level=
+                getSkillLevel(skill);
+
+            if(level>=99){
+
+                const data=
+                    masterCapes[skill];
+
+                const slot=
+                    document.createElement("div");
+
+                slot.className=
+                    "slot masterSlot"+
+                    (masterCapesTrimmed()?" trimmed":"");
+
+                slot.innerHTML=`
+
+                    <strong
+                        style="color:${data.color}"
+                    >
+                        ${data.icon}
+                        ${skill}${masterCapesTrimmed()?" ✦":""}
+                    </strong>
+
+                    <button
+                        onclick="${equippedMasterCape===skill?"unequipMasterCape()":"equipMasterCape('"+skill+"')"}"
+                    >
+                        ${equippedMasterCape===skill?"REMOVE":"WEAR"}
+                    </button>
+                `;
+
+                box.appendChild(slot);
+
+            }
+
+        });
+
+    if(box.children.length===0){
+
+        const empty=
+            document.createElement("div");
+
+        empty.className="slot";
+
+        empty.textContent=
+            "Reach level 99 to unlock Master Capes.";
+
+        box.appendChild(empty);
+
+    }
+
+}
+
+function unlockAllMasterCapes(){
+
+    attackLevel=99;
+    strengthLevel=99;
+    defenceLevel=99;
+    hitpointsLevel=99;
+    woodcuttingLevel=99;
+    miningLevel=99;
+    smithingLevel=99;
+    fishingLevel=99;
+    cookingLevel=99;
+
+    updateMasterCapeInventory();
+
+    updateUI();
+
+    chat(
+        "Developer: All Master Capes unlocked."
+    );
+
+}
+
+/* ============================================================
+   INVENTORY
+============================================================ */
+
+function addInventorySlot(
+    name,
+    amount,
+    action,
+    icon
+){
+
+    const box=
+        document.getElementById(
+            "inventory"
+        );
+
+    const slot=
+        document.createElement("div");
+
+    slot.className="slot";
+
+    let html=
+        "<div>"+(icon||"📦")+"</div>"+
+        "<strong>"+name+"</strong>"+
+        "<div>x"+amount+"</div>";
+
+    if(action){
+
+        html+=action;
+
+    }
+
+    slot.innerHTML=html;
+
+    box.appendChild(slot);
+
+}
+
+function updateInventory(){
+
+    const box=
+        document.getElementById(
+            "inventory"
+        );
+
+    box.innerHTML="";
+
+    if(logs>0){
+
+        addInventorySlot(
+            "Logs",
+            logs,
+            "",
+            "🪵"
+        );
+
+    }
+
+    if(coins>0){
+
+        addInventorySlot(
+            "Coins",
+            coins,
+            "",
+            "🪙"
+        );
+
+    }
+
+    if(bread>0){
+
+        addInventorySlot(
+            "Bread",
+            bread,
+            `<button onclick="eatFood()">EAT</button>`,
+            "🍞"
+        );
+
+    }
+
+    if(swords>0){
+
+        addInventorySlot(
+            "Sword",
+            swords,
+            swordButton(),
+            "⚔️"
+        );
+
+    }
+
+    if(forgedSwords>0){
+
+        addInventorySlot(
+            "Forged Sword",
+            forgedSwords,
+            swordButton(),
+            "⚔️"
+        );
+
+    }
+
+    if(bronzeAxes>0){
+
+        addInventorySlot(
+            "Bronze Axe",
+            bronzeAxes,
+            toolButton("axe"),
+            "🪓"
+        );
+
+    }
+
+    if(bronzePickaxes>0){
+
+        addInventorySlot(
+            "Bronze Pickaxe",
+            bronzePickaxes,
+            toolButton("pickaxe"),
+            "⛏️"
+        );
+
+    }
+
+    if(fishingPoles>0){
+
+        addInventorySlot(
+            "Fishing Pole",
+            fishingPoles,
+            "",
+            "🎣"
+        );
+
+    }
+
+    if(copperOre>0){
+
+        addInventorySlot(
+            "Copper Ore",
+            copperOre,
+            "",
+            "🪨"
+        );
+
+    }
+
+    if(tinOre>0){
+
+        addInventorySlot(
+            "Tin Ore",
+            tinOre,
+            "",
+            "🪨"
+        );
+
+    }
+
+    if(bronzeBars>0){
+
+        addInventorySlot(
+            "Bronze Bars",
+            bronzeBars,
+            "",
+            "🟫"
+        );
+
+    }
+
+    if(fish>0){
+
+        addInventorySlot(
+            "Raw Fish",
+            fish,
+            "",
+            "🐟"
+        );
+
+    }
+
+    if(cookedFish>0){
+
+        addInventorySlot(
+            "Cooked Fish",
+            cookedFish,
+            `<button onclick="eatFood()">EAT</button>`,
+            "🍖"
+        );
+
+    }
+
+    if(bones>0){
+
+        addInventorySlot(
+            "Bones",
+            bones,
+            "",
+            "🦴"
+        );
+
+    }
+
+    if(bronzeHelms>0){
+
+        addInventorySlot(
+            "Bronze Helm",
+            bronzeHelms,
+            armorButton("helm",helmEquipped),
+            "🪖"
+        );
+
+    }
+
+    if(bronzePlatelegs>0){
+
+        addInventorySlot(
+            "Platelegs",
+            bronzePlatelegs,
+            armorButton("legs",legsEquipped),
+            "🛡️"
+        );
+
+    }
+
+    if(bronzePlatebodies>0){
+
+        addInventorySlot(
+            "Platebody",
+            bronzePlatebodies,
+            armorButton("body",bodyEquipped),
+            "🛡️"
+        );
+
+    }
+
+}
+
+/* ============================================================
+   UI
+============================================================ */
+
+function updateUI(){
+
+    document.getElementById("healthDisplay")
+        .textContent=
+        health+" / "+maxHealth;
+
+    document.getElementById("coinsDisplay")
+        .textContent=coins;
+
+    document.getElementById("bankCoinsDisplay")
+        .textContent=bankCoins;
+
+    document.getElementById("attackLevel")
+        .textContent=attackLevel;
+
+    document.getElementById("strengthLevel")
+        .textContent=strengthLevel;
+
+    document.getElementById("defenceLevel")
+        .textContent=defenceLevel;
+
+    document.getElementById("hitpointsLevel")
+        .textContent=hitpointsLevel;
+
+    document.getElementById("woodcuttingLevel")
+        .textContent=woodcuttingLevel;
+
+    document.getElementById("miningLevel")
+        .textContent=miningLevel;
+
+    document.getElementById("smithingLevel")
+        .textContent=smithingLevel;
+
+    document.getElementById("fishingLevel")
+        .textContent=fishingLevel;
+
+    document.getElementById("cookingLevel")
+        .textContent=cookingLevel;
+
+    document.getElementById("characterNameDisplay")
+        .textContent=
+        currentUsername || "Adventurer";
+
+    updateInventory();
+
+    updateMasterCapeInventory();
+
+    updatePlayerAppearance();
+
+    autoSaveCharacter();
+
+}
+
+/* ============================================================
+   SAVE SYSTEM
+============================================================ */
+
+function getAutoSaveKey(){
+
+    if(!currentUsername){
+
+        return null;
+
+    }
+
+    return (
+        "EverScape_AutoSave_"+
+        currentUsername.toLowerCase()
+    );
+
+}
+
+function getCharacterData(){
+
+    return {
+
+        game:"EverScape",
+
+        account:{
+            username:
+                currentUsername || ""
+        },
+
+        saveVersion:2,
+
+        savedAt:
+            new Date().toISOString(),
+
+        player:{
+            x:playerX,
+            y:playerY
+        },
+
+        skills:{
+            attack:attackLevel,
+            strength:strengthLevel,
+            defence:defenceLevel,
+            hitpoints:hitpointsLevel,
+            woodcutting:woodcuttingLevel,
+            mining:miningLevel,
+            smithing:smithingLevel,
+            fishing:fishingLevel,
+            cooking:cookingLevel
+        },
+
+        health:{
+            current:health,
+            max:maxHealth
+        },
+
+        inventory:{
+            coins,
+            logs,
+            bread,
+            swords,
+            ironPickaxes,
+            bronzePickaxes,
+            bronzeAxes,
+            capes,
+            fishingPoles,
+            copperOre,
+            tinOre,
+            bronzeBars,
+            forgedSwords,
+            fish,
+            cookedFish,
+            bones,
+            bronzeHelms,
+            bronzePlatelegs,
+            bronzePlatebodies
+        },
+
+        equipment:{
+            weapon:equippedWeapon,
+            tool:equippedTool,
+            armor:(helmEquipped||bodyEquipped||legsEquipped),
+            helm:helmEquipped,
+            body:bodyEquipped,
+            legs:legsEquipped,
+            masterCape:equippedMasterCape
+        },
+
+        bank:{
+            coins:bankCoins,
+            items:bankItems
+        },
+
+        combat:{
+            goblinKills
+        }
+
+    };
+
+}
+
+function autoSaveCharacter(){
+
+    try{
+
+        const key=
+            getAutoSaveKey();
+
+        if(!key)return;
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(
+                getCharacterData()
+            )
+        );
+
+    }catch(error){
+
+        console.log(
+            "Auto-save unavailable."
+        );
+
+    }
+
+}
+
+function loadAutoSave(){
+
+    const key=
+        getAutoSaveKey();
+
+    if(!key)return;
+
+    try{
+
+        const raw=
+            localStorage.getItem(key);
+
+        if(!raw){
+
+            return;
+
+        }
+
+        const data=
+            JSON.parse(raw);
+
+        loadCharacterData(data);
+
+        chat(
+            "Your saved character has been loaded."
+        );
+
+    }catch(error){
+
+        console.log(
+            "Could not load auto-save."
+        );
+
+    }
+
+}
+
+function saveCharacter(){
+
+    const data=
+        getCharacterData();
+
+    const blob=
+        new Blob(
+            [
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                )
+            ],
+            {
+                type:"application/json"
+            }
+        );
+
+    const url=
+        URL.createObjectURL(blob);
+
+    const link=
+        document.createElement("a");
+
+    link.href=url;
+
+    link.download=
+        "EverScape_"+
+        (currentUsername||"Character")+
+        ".json";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+    chat(
+        "Character save downloaded."
+    );
+
+}
+
+function loadCharacter(event){
+
+    const file=
+        event.target.files[0];
+
+    if(!file){
+
+        return;
+
+    }
+
+    const reader=
+        new FileReader();
+
+    reader.onload=function(){
+
+        try{
+
+            const data=
+                JSON.parse(
+                    reader.result
+                );
+
+            loadCharacterData(data);
+
+            chat(
+                "Character loaded successfully."
+            );
+
+            updateUI();
+
+        }catch(error){
+
+            alert(
+                "Invalid EverScape character file."
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file);
+
+    event.target.value="";
+
+}
+
+function loadCharacterData(data){
+
+    if(
+        data.game!=="EverScape" &&
+        data.game!=="Gielinor Legends"
+    ){
+
+        throw new Error(
+            "Invalid EverScape save."
+        );
+
+    }
+
+    if(data.player){
+
+        playerX=
+            Number(data.player.x) || 470;
+
+        playerY=
+            Number(data.player.y) || 270;
+
+    }
+
+    if(data.skills){
+
+        attackLevel=
+            Number(data.skills.attack) || 1;
+
+        strengthLevel=
+            Number(data.skills.strength) || 1;
+
+        defenceLevel=
+            Number(data.skills.defence) || 1;
+
+        hitpointsLevel=
+            Number(data.skills.hitpoints) || 10;
+
+        woodcuttingLevel=
+            Number(data.skills.woodcutting) || 1;
+
+        miningLevel=
+            Number(data.skills.mining) || 1;
+
+        smithingLevel=
+            Number(data.skills.smithing) || 1;
+
+        fishingLevel=
+            Number(data.skills.fishing) || 1;
+
+        cookingLevel=
+            Number(data.skills.cooking) || 1;
+
+    }
+
+    if(data.health){
+
+        health=
+            Number(data.health.current) || 10;
+
+        maxHealth=
+            Number(data.health.max) || 10;
+
+    }
+
+    if(data.inventory){
+
+        coins=
+            Number(data.inventory.coins)||0;
+
+        logs=
+            Number(data.inventory.logs)||0;
+
+        bread=
+            Number(data.inventory.bread)||0;
+
+        swords=
+            Number(data.inventory.swords)||0;
+
+        ironPickaxes=
+            Number(data.inventory.ironPickaxes)||0;
+
+        bronzePickaxes=
+            Number(data.inventory.bronzePickaxes)||0;
+
+        bronzeAxes=
+            Number(data.inventory.bronzeAxes)||0;
+
+        capes=
+            Number(data.inventory.capes)||0;
+
+        fishingPoles=
+            Number(data.inventory.fishingPoles)||0;
+
+        copperOre=
+            Number(data.inventory.copperOre)||0;
+
+        tinOre=
+            Number(data.inventory.tinOre)||0;
+
+        bronzeBars=
+            Number(data.inventory.bronzeBars)||0;
+
+        forgedSwords=
+            Number(data.inventory.forgedSwords)||0;
+
+        fish=
+            Number(data.inventory.fish)||0;
+
+        cookedFish=
+            Number(data.inventory.cookedFish)||0;
+
+        bones=
+            Number(data.inventory.bones)||0;
+
+        bronzeHelms=
+            Number(data.inventory.bronzeHelms)||0;
+
+        bronzePlatelegs=
+            Number(data.inventory.bronzePlatelegs)||0;
+
+        bronzePlatebodies=
+            Number(data.inventory.bronzePlatebodies)||0;
+
+    }
+
+    if(data.equipment){
+
+        equippedWeapon=
+            data.equipment.weapon ||
+            "None";
+
+        equippedTool=
+            data.equipment.tool ||
+            "None";
+
+        if(
+            data.equipment.helm!==undefined ||
+            data.equipment.body!==undefined ||
+            data.equipment.legs!==undefined
+        ){
+
+            helmEquipped=!!data.equipment.helm;
+            bodyEquipped=!!data.equipment.body;
+            legsEquipped=!!data.equipment.legs;
+
+        }else if(data.equipment.armor){
+
+            /* old save: armor was one on/off flag */
+            helmEquipped=true;
+            bodyEquipped=true;
+            legsEquipped=true;
+
+        }else{
+
+            helmEquipped=false;
+            bodyEquipped=false;
+            legsEquipped=false;
+
+        }
+
+        equippedMasterCape=
+            data.equipment.masterCape ||
+            null;
+
+    }
+
+    if(data.bank){
+
+        bankCoins=
+            Number(data.bank.coins)||0;
+
+        Object.keys(bankItems).forEach(function(k){delete bankItems[k];});
+
+        if(data.bank.items && typeof data.bank.items==="object"){
+
+            Object.keys(data.bank.items).forEach(function(k){
+
+                const n=Number(data.bank.items[k])||0;
+
+                if(n>0 && bankDef(k))bankItems[k]=n;
+
+            });
+
+        }
+
+    }
+
+    if(data.combat){
+
+        goblinKills=
+            Number(data.combat.goblinKills)||0;
+
+    }
+
+    updatePlayer();
+
+    updatePlayerAppearance();
+
+    updateUI();
+
+}
+
+/* ============================================================
+   NEW CHARACTER
+============================================================ */
+
+function newCharacter(){
+
+    const confirmed=
+        confirm(
+            "Start a completely new character?"
+        );
+
+    if(!confirmed){
+
+        return;
+
+    }
+
+    coins=50;
+    health=10;
+    maxHealth=10;
+
+    attackLevel=1;
+    strengthLevel=1;
+    defenceLevel=1;
+    hitpointsLevel=10;
+
+    woodcuttingLevel=1;
+    miningLevel=1;
+    smithingLevel=1;
+    fishingLevel=1;
+    cookingLevel=1;
+
+    logs=0;
+    bread=0;
+    swords=1;
+
+    ironPickaxes=0;
+    bronzePickaxes=0;
+    bronzeAxes=0;
+
+    capes=0;
+    fishingPoles=0;
+
+    copperOre=0;
+    tinOre=0;
+    bronzeBars=0;
+    forgedSwords=0;
+
+    fish=0;
+    cookedFish=0;
+    bones=0;
+
+    bronzeHelms=0;
+    bronzePlatelegs=0;
+    bronzePlatebodies=0;
+
+    equippedWeapon="None";
+    equippedTool="None";
+    helmEquipped=false;
+    bodyEquipped=false;
+    legsEquipped=false;
+
+    bankCoins=0;
+    Object.keys(bankItems).forEach(function(k){delete bankItems[k];});
+    goblinKills=0;
+
+    equippedMasterCape=null;
+
+    playerX=540;
+    playerY=405;
+    playerFacing="down";
+
+    goblinHealth={
+        1:20,
+        2:20
+    };
+
+    goblinAlive={
+        1:true,
+        2:true
+    };
+
+    document.getElementById("goblin1")
+        .style.display="block";
+
+    document.getElementById("goblin2")
+        .style.display="block";
+
+    updatePlayer();
+
+    updateUI();
+
+    chat(
+        "A new EverScape character has been created."
+    );
+
+}
+
+/* ============================================================
+   INITIALIZE
+============================================================ */
+
+checkLastUser();
+
+updatePlayer();
+
+updatePlayerAppearance();
+
+updateMasterCapeInventory();
+
+updateUI();
+
+chat(
+    "Welcome to EverScape!"
+);
+
+chat(
+    "Every skill has a legendary 99 Master Cape."
+);
+
+chat(
+    "Reach level 99 to unlock one."
+);
+
+</script>
+
+</body>
+</html>
